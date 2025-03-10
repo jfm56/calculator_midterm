@@ -1,0 +1,16 @@
+*.sw*
+.coverage
+.pytest_cache
+*__pycache__
+.env
+
+# Ignore log files
+*.log
+logs/
+debug.log
+error.log
+app.log
+*.log.*
+log/
+*.log.old
+
