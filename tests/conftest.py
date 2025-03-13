@@ -1,5 +1,6 @@
 """Pytest configuration and test utilities."""
 
+import shutil
 import warnings
 import pytest
 from decimal import Decimal, InvalidOperation
@@ -9,6 +10,9 @@ import os
 from config.plugins import load_plugins
 from operations.operation_base import Operation
 from mappings.operations_map import operation_mapping
+from config.env import HISTORY_FILE_PATH
+
+BACKUP_FILE = HISTORY_FILE_PATH + ".bak"
 
 # ✅ Load operation plugins
 load_plugins()
@@ -17,6 +21,17 @@ load_plugins()
 fake = Faker()
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+@pytest.fixture(scope="session", autouse=True)
+def backup_and_restore_csv():
+    """Backs up the CSV file before testing and restores it after testing."""
+    if os.path.exists(HISTORY_FILE_PATH):
+        shutil.copy(HISTORY_FILE_PATH, BACKUP_FILE)  # ✅ Backup the CSV file
+
+    yield  # Run the tests
+
+    if os.path.exists(BACKUP_FILE):  # ✅ Restore backup after tests
+        shutil.move(BACKUP_FILE, HISTORY_FILE_PATH)
 
 @pytest.fixture(scope="function", autouse=True)
 def reset_operation_registry():
