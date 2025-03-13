@@ -12,7 +12,8 @@ disable=unused-argument,
         invalid-name,
         no-member,
         wrong-import-position,
-        wrong-import-order
+        wrong-import-order,
+        ungrouped-imports
 
 [REPORTS]
 # Set the output format. Available formats: text, parseable, colorized, json, msvs (visual studio) and html

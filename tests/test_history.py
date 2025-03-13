@@ -1,16 +1,9 @@
 """Tests for the History class using Pandas for data storage."""
 import os
 import pandas as pd
-import pytest
 from history.history import History
 from config.env import HISTORY_FILE_PATH
 
-@pytest.fixture(autouse=True)
-def setup_and_teardown():
-    """Ensure a clean slate before and after each test."""
-    History.clear_history()
-    yield
-    History.clear_history()
 
 def test_add_entry():
     """Test adding an entry to history."""
@@ -55,13 +48,13 @@ def test_remove_entry():
 def test_clear_history():
     """Test clearing all history records."""
     History.add_entry("divide", 10, 2, 5)
-    
+
     df_before = History.get_history()
     assert not df_before.empty, "⚠️ History should not be empty before clearing"
 
     History.clear_history()
     df_after = History.get_history()
-    
+
     assert isinstance(df_after, pd.DataFrame), "⚠️ Expected DataFrame after clearing history"
     assert df_after.empty, "⚠️ History should be empty after clearing"
 
@@ -86,6 +79,9 @@ def test_save_and_load_history():
         csv_contents_after_clear = file.read()
         print("\n🔄 CSV File Contents After Clearing (Before Reloading):\n", csv_contents_after_clear)
 
+    # ✅ Ensure the CSV is not deleted before attempting to reload
+    assert os.path.exists(HISTORY_FILE_PATH), "⚠️ CSV file should still exist before loading"
+
     History.load_history()
     df = History.get_history()
 
@@ -99,7 +95,7 @@ def test_reconstitute_entry():
     History.add_entry("divide", 8, 2, 4)
     df = History.get_history()
     record = df.iloc[0]
-    
+
     restored_entry = History.reconstitute_entry(record)
     assert isinstance(restored_entry, dict), "⚠️ Expected a dictionary"
     assert restored_entry["Operation"] == "divide"

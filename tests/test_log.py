@@ -1,7 +1,6 @@
 """Tests for `log_config.py` logging behavior."""
-
-import pytest
 import logging
+import pytest
 from config.log_config import logger
 
 @pytest.fixture(autouse=True)

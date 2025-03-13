@@ -2,15 +2,20 @@
 
 import shutil
 import warnings
-import pytest
-from decimal import Decimal, InvalidOperation
-from faker import Faker
 import sys
 import os
+from decimal import Decimal, InvalidOperation  # ✅ Standard Library imports
+
+import pytest
+from faker import Faker  # ✅ Third-party library imports
+
 from config.plugins import load_plugins
+from config.env import HISTORY_FILE_PATH  # ✅ Grouped `config` package imports
+
+from history.history import History
 from operations.operation_base import Operation
-from mappings.operations_map import operation_mapping
-from config.env import HISTORY_FILE_PATH
+from mappings.operations_map import operation_mapping  # ✅ Project-specific imports
+
 
 BACKUP_FILE = HISTORY_FILE_PATH + ".bak"
 
@@ -47,6 +52,13 @@ def operation_test_cases():
         ("multiply", Decimal("4"), Decimal("3"), Decimal("12")),
         ("divide", Decimal("10"), Decimal("2"), Decimal("5")),
     ]
+
+@pytest.fixture(autouse=True)
+def setup_and_teardown():
+    """Ensure a clean slate before and after each test."""
+    History.clear_history()
+    yield
+    History.clear_history()
 
 def generate_test_data(num_record):
     """Dynamically generate test data for operations."""
