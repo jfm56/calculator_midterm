@@ -2,6 +2,7 @@
 import os
 import sys
 from decimal import Decimal, InvalidOperation
+from app.menu import show_menu, handle_menu_choice
 
 # ✅ Get absolute path dynamically
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -50,14 +51,15 @@ class CalculatorREPL:
 
         from app.menu import Menu  # ✅ Delayed import to prevent circular import
 
+        # Inside CalculatorREPL.repl()
         commands = {
-            "menu": Menu.run,
-            "history": lambda: print("\n".join(History.get_history())),
-            "last": lambda: print(History.get_last_entry()),
+            "menu": show_menu,
+            "history": lambda: print(History.get_history()),
             "clear": lambda: (History.clear_history(), print("History cleared.")),
+            "remove": lambda: handle_menu_choice("3"),  # Allow remove from REPL
+            "reload": lambda: handle_menu_choice("4"),  # Allow reload from REPL
             "exit": lambda: sys.exit("Exiting calculator. Goodbye!"),
-            "quit": lambda: sys.exit("Exiting calculator. Goodbye!"),
-        }
+}
 
         while True:
             user_input = input(">> ").strip().lower()
