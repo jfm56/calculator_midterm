@@ -32,6 +32,7 @@ DATABASE_URL = get_env_var("DATABASE_URL", "sqlite:///calculator.db")
 DEBUG_MODE = get_env_var("DEBUG_MODE", "False", lambda x: x.lower() in ["true", "1"])
 TEST_MODE = get_env_var("TEST_MODE", "False", lambda x: x.lower() in ["true", "1"])
 COVERAGE_THRESHOLD = get_env_var("COVERAGE_THRESHOLD", 80, int)
+HISTORY_FILE_PATH = os.getenv("HISTORY_FILE_PATH", "calculator_history.csv")
 
 # ✅ Export all relevant variables
 __all__ = ["get_env_var", "LOG_LEVEL", "PLUGIN_DIRECTORY", "DATABASE_URL", "DEBUG_MODE", "TEST_MODE", "COVERAGE_THRESHOLD"]

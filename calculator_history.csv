@@ -1,0 +1,5 @@
+ID,Operation,Operand1,Operand2,Result
+1,add,10,5,15
+2,subtract,20,4,16
+3,multiply,5,2,10
+4,divide,100,10,10

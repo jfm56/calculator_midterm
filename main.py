@@ -1,10 +1,15 @@
-"""Calculator REPL"""
+"""Calculator REPL (Read-Eval-Print Loop)"""
+import os
+import sys
+from decimal import Decimal, InvalidOperation
+
+# ✅ Get absolute path dynamically
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, PROJECT_ROOT)
+
 from operations.operation_base import Operation
 from config import plugins
 from history.history import History
-from app.menu import show_menu
-from decimal import Decimal, InvalidOperation
-import sys
 from config.log_config import logger
 
 logger.info("Calculator started")
@@ -18,12 +23,12 @@ class CalculatorREPL:
     def run_operation(operation_name, a: Decimal, b: Decimal):
         """
         Executes a calculator operation dynamically from the plugin system.
-        
+
         Args:
             operation_name (str): The operation name (e.g., "add", "subtract").
             a (Decimal): First operand.
             b (Decimal): Second operand.
-            
+
         Returns:
             Decimal | str: The result or an error message.
         """
@@ -43,8 +48,10 @@ class CalculatorREPL:
         print("\n== Welcome to REPL Calculator ==")
         print("Type 'menu' for options, or enter calculations (e.g., add 2 3).")
 
+        from app.menu import Menu  # ✅ Delayed import to prevent circular import
+
         commands = {
-            "menu": show_menu,
+            "menu": Menu.run,
             "history": lambda: print("\n".join(History.get_history())),
             "last": lambda: print(History.get_last_entry()),
             "clear": lambda: (History.clear_history(), print("History cleared.")),
