@@ -8,7 +8,7 @@ class Add(Operation):
     @staticmethod
     def execute(a, b) -> Decimal:
         """Returns the sum of two numbers."""
-        a, b = Add.validate_numbers(a, b)  # ✅ Convert numbers if needed
+        a, b = Add.validate_numbers(a, b)
         return a + b
 
     @classmethod

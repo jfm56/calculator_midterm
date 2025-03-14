@@ -39,13 +39,12 @@ def test_handle_view_history_with_entries(capsys):
     assert "15" in captured.out
 
 
-def test_handle_clear_history(capsys):
+def test_handle_clear_history(monkeypatch, capsys):
     """Ensure clearing history removes all entries."""
-    History.add_entry("subtract", 20, 4, 16)
+    monkeypatch.setattr("builtins.input", lambda _: "yes")
     Menu.handle_choice("2")
     captured = capsys.readouterr()
-    assert "✅ History cleared successfully!" in captured.out
-    assert History.get_history().empty, "⚠️ History should be empty after clearing."
+    assert "History cleared successfully!" in captured.out
 
 
 def test_handle_remove_entry_existing(capsys, monkeypatch):

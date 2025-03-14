@@ -1,3 +1,4 @@
+"""Test configuration and shared fixtures for the calculator tests."""
 import pytest
 from history.history import History
 from mappings.operations_map import operation_mapping
