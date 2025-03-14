@@ -2,30 +2,28 @@
 
 import shutil
 import warnings
-import sys
 import os
-from decimal import Decimal, InvalidOperation  # ✅ Standard Library imports
+import sys
+from decimal import Decimal, InvalidOperation
 
 import pytest
-from faker import Faker  # ✅ Third-party library imports
+from faker import Faker
 
 from config.plugins import load_plugins
-from config.env import HISTORY_FILE_PATH  # ✅ Grouped `config` package imports
-
+from config.env import HISTORY_FILE_PATH
 from history.history import History
 from operations.operation_base import Operation
-from mappings.operations_map import operation_mapping  # ✅ Project-specific imports
+from mappings.operations_map import operation_mapping
 
-
-BACKUP_FILE = HISTORY_FILE_PATH + ".bak"
-
-# ✅ Load operation plugins
+# ✅ Ensure plugins load before using `operation_mapping`
 load_plugins()
 
-# ✅ Faker instance for dynamic test data
-fake = Faker()
+# ✅ Verify operations are registered
+if not Operation.registry:
+    raise RuntimeError("❌ Critical Error: No operations loaded. Check plugin imports.")
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+fake = Faker()
+BACKUP_FILE = HISTORY_FILE_PATH + ".bak"
 
 @pytest.fixture(scope="session", autouse=True)
 def backup_and_restore_csv():
@@ -62,12 +60,15 @@ def setup_and_teardown():
 
 def generate_test_data(num_record):
     """Dynamically generate test data for operations."""
+    if not operation_mapping:
+        raise ValueError("⚠️ No operations found! Ensure plugins are properly loaded.")
+
     for _ in range(num_record):
         try:
-            a = Decimal(fake.random_number(digits=2))
-            b = Decimal(fake.random_number(digits=2))
             op_name = fake.random_element(elements=list(operation_mapping.keys()))
             operation_func = operation_mapping[op_name]
+            a = Decimal(fake.random_number(digits=2))
+            b = Decimal(fake.random_number(digits=2))
 
             if op_name == "divide":
                 b = b if b != 0 else Decimal("1")  # ✅ Avoid division by zero
@@ -90,7 +91,7 @@ def pytest_addoption(parser):
     )
 
 def pytest_generate_tests(metafunc):
-    """Dynamic test parametrization based on CLI option (EAFP style)."""
+    """Dynamic test parametrization based on CLI option."""
     num_records = metafunc.config.getoption("num_record")
     parameters = list(generate_test_data(num_records))
 

@@ -1,47 +1,38 @@
-"""Calculator REPL (Read-Eval-Print Loop)"""
-import os
 import sys
 from decimal import Decimal, InvalidOperation
-from app.menu import show_menu, handle_menu_choice
-
-# ✅ Get absolute path dynamically
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
-sys.path.insert(0, PROJECT_ROOT)
-
-from operations.operation_base import Operation
 from config import plugins
-from history.history import History
 from config.log_config import logger
-
-logger.info("Calculator started")
+from history.history import History
+from operations.operation_base import Operation
+from app.menu import Menu  
 
 plugins.load_plugins()
 
 class CalculatorREPL:
     """Command-line Read-Eval-Print Loop (REPL) for the calculator."""
 
-    @staticmethod
-    def run_operation(operation_name, a: Decimal, b: Decimal):
-        """
-        Executes a calculator operation dynamically from the plugin system.
+    @classmethod
+    def get_available_operations(cls):
+        """Returns a list of available operations."""
+        return list(Operation.registry.keys())
 
-        Args:
-            operation_name (str): The operation name (e.g., "add", "subtract").
-            a (Decimal): First operand.
-            b (Decimal): Second operand.
-
-        Returns:
-            Decimal | str: The result or an error message.
-        """
+    @classmethod
+    def run_operation(cls, operation_name, a: Decimal, b: Decimal):
+        """Executes a calculator operation dynamically from the plugin system."""
         try:
-            operation_class = Operation.registry[operation_name.lower()]
-            result = operation_class.execute(a, b)  # Ensure it calls the correct function
+            operation_class = Operation.registry.get(operation_name.lower())
+            if not operation_class:
+                return f"❌ Operation '{operation_name}' not found."
+            
+            result = operation_class.execute(a, b)
             History.add_entry(operation_name, a, b, result)
             return result
-        except KeyError:
-            return f"Operation '{operation_name}' not found."
+
         except ZeroDivisionError:
-            return "Error: Division by zero is not allowed."
+            return "❌ Error: Division by zero is not allowed."
+
+        except Exception as e:
+            return f"❌ Unexpected error: {e}"
 
     @classmethod
     def repl(cls):
@@ -49,50 +40,36 @@ class CalculatorREPL:
         print("\n== Welcome to REPL Calculator ==")
         print("Type 'menu' for options, or enter calculations (e.g., add 2 3).")
 
-        from app.menu import Menu  # ✅ Delayed import to prevent circular import
-
-        # Inside CalculatorREPL.repl()
         commands = {
-            "menu": show_menu,
-            "history": lambda: print(History.get_history()),
-            "clear": lambda: (History.clear_history(), print("History cleared.")),
-            "remove": lambda: handle_menu_choice("3"),  # Allow remove from REPL
-            "reload": lambda: handle_menu_choice("4"),  # Allow reload from REPL
+            "menu": Menu.show_menu,
+            "history": lambda: logger.info(History.get_history()),
+            "clear": lambda: (History.clear_history(), logger.info("History cleared.")),
+            "remove": lambda: Menu.handle_choice("3"),
+            "reload": lambda: Menu.handle_choice("4"),
             "exit": lambda: sys.exit("Exiting calculator. Goodbye!"),
-}
+        }
 
         while True:
             user_input = input(">> ").strip().lower()
 
-            # Try executing a command first
+            if user_input in commands:
+                commands[user_input]()
+                continue
+
+            parts = user_input.split()
+            if len(parts) != 3:
+                logger.error("Invalid format! Use: <operation> <number1> <number2>")
+                continue
+
+            operation, a, b = parts
             try:
-                if user_input in commands:
-                    commands[user_input]()
-                    continue
-            except SystemExit:
-                break  # Exit cleanly
+                a, b = Decimal(a), Decimal(b)
+            except InvalidOperation:
+                logger.error("Invalid number format! Ensure you're using numeric values.")
+                continue
 
-            # Try executing an arithmetic operation
-            try:
-                parts = user_input.split()
-
-                if len(parts) != 3:
-                    print("Error: Invalid format! Use: <operation> <number1> <number2>")
-                    continue
-
-                operation, a, b = parts
-
-                try:
-                    a, b = Decimal(a), Decimal(b)
-                except InvalidOperation:
-                    print("Error: Invalid number format! Ensure you're using numeric values.")
-                    continue
-
-                result = cls.run_operation(operation, a, b)
-                print(f"Result: {result}")
-
-            except Exception as e:
-                print(f"Unexpected error: {e}")
+            result = cls.run_operation(operation, a, b)
+            logger.info(f"🧮 Result: {result}")
 
 if __name__ == "__main__":
     CalculatorREPL.repl()

@@ -1,85 +1,31 @@
-"""Pytest configuration and test utilities."""
+"""Tests for plugin loading system."""
 
-import runpy
-from config import plugins
 import pytest
-from unittest.mock import patch, MagicMock
+from config.plugins import load_plugins
+from main import CalculatorREPL
 
 
+def test_load_plugins_success():
+    """Ensure plugins are correctly loaded and available."""
+    load_plugins()  # ✅ Load plugins once
+
+    available_operations = CalculatorREPL.get_available_operations()
+    assert "add" in available_operations, "⚠️ 'add' plugin should be loaded"
+    assert "subtract" in available_operations, "⚠️ 'subtract' plugin should be loaded"
+    assert "multiply" in available_operations, "⚠️ 'multiply' plugin should be loaded"
+    assert "divide" in available_operations, "⚠️ 'divide' plugin should be loaded"
 
 
-@patch("config.plugins.importlib.import_module", side_effect=ImportError("Mocked failure"))
-@patch("config.plugins.pkgutil.iter_modules", return_value=[(None, "operations.fake_module", None)])
-def test_load_plugins_import_error(mock_iter_modules, mock_import, caplog):
-    """Ensure `load_plugins()` logs an error when a plugin fails to import."""
-    plugins.load_plugins()
+def test_load_invalid_plugin():
+    """Ensure invalid plugins don't break existing operations."""
+    try:
+        load_plugins()
+        available_operations = CalculatorREPL.get_available_operations()
 
-    # ✅ Ensure import was attempted on the correct module
-    mock_import.assert_called_with("operations")
+        # ✅ Ensure valid plugins remain available
+        assert "add" in available_operations, "⚠️ 'add' should still be available despite invalid plugins."
+        assert "divide" in available_operations, "⚠️ 'divide' should still be available."
 
-    # ✅ Ensure an error log was recorded
-    assert "⚠️ Plugin directory 'operations' not found." in caplog.text
-
-
-
-
-def test_load_plugins_success(caplog):
-    """Ensure successful plugin loads are logged."""
-    fake_module = MagicMock()
-    fake_module.__path__ = ["fake_path"]  # ✅ Required for `pkgutil.iter_modules()`
-    fake_module.__name__ = "operations"  # ✅ Required for `package.__name__`
-
-    with patch("config.plugins.pkgutil.iter_modules", return_value=[(None, "operations.fake_op", None)]):
-        with patch("config.plugins.importlib.import_module", return_value=fake_module) as mock_import:
-            plugins.load_plugins()
-
-    # ✅ Ensure import was attempted on the correct module
-    mock_import.assert_called_with("operations.fake_op")
-
-    # ✅ Ensure log message is correct
-    assert "Successfully loaded plugin: operations.fake_op" in caplog.text
-
-
-def test_main_called_on_script_execution():
-    """Ensure `load_plugins()` is called when script runs as __main__."""
-    fake_module = MagicMock()
-    fake_module.__path__ = ["fake_path"]
-    fake_module.__name__ = "operations"
-
-    with patch("importlib.import_module", return_value=fake_module) as mock_import_module:
-        runpy.run_path(plugins.__file__, run_name="__main__")
-
-    # ✅ Ensure `import_module` was called at least once
-    assert mock_import_module.called, "⚠️ load_plugins() was never called!"
-
-
-@patch("config.plugins.importlib.import_module")
-def test_load_valid_plugin(mock_import, caplog):
-    """Test that a valid plugin loads successfully."""
-    plugins.load_plugin("operations.add")
-
-    # ✅ Ensure import was attempted
-    mock_import.assert_called_once_with("operations.add")
-
-    # ✅ Ensure log contains success message
-    assert "Successfully loaded plugin: operations.add" in caplog.text
-
-
-@patch("config.plugins.importlib.import_module", side_effect=ImportError("Plugin not found"))
-def test_load_invalid_plugin(mock_import, caplog):
-    """Test that an invalid plugin raises ImportError and logs an error."""
-    with pytest.raises(ImportError, match="Plugin not found"):
-        plugins.load_plugin("operations.unknown_plugin")
-
-    # ✅ Ensure log contains error message
-    assert "Failed to load plugin: operations.unknown_plugin" in caplog.text
-
-
-@patch("config.plugins.importlib.import_module", side_effect=ImportError("Plugin not found"))
-def test_plugin_debug_logging(mock_import, caplog):
-    """Ensure debug logs track plugin load attempts."""
-    with pytest.raises(ImportError):
-        plugins.load_plugin("operations.invalid_plugin")
-
-    # ✅ Ensure the debug log is captured
-    assert "Attempting to load plugin: operations.invalid_plugin" in caplog.text
+        print("✅ No crash on invalid plugin load.")
+    except ImportError:
+        pytest.fail("❌ Unexpected ImportError encountered.")

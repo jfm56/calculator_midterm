@@ -6,13 +6,13 @@ class Add(Operation):
     """Performs addition of two numbers."""
 
     @staticmethod
-    def execute(a: Decimal, b: Decimal) -> Decimal:
+    def execute(a, b) -> Decimal:
         """Returns the sum of two numbers."""
-        Add.validate_numbers(a, b)
+        a, b = Add.validate_numbers(a, b)  # ✅ Convert numbers if needed
         return a + b
 
     @classmethod
-    def validate_numbers(cls, a, b) -> None:
+    def validate_numbers(cls, a, b) -> tuple[Decimal, Decimal]:
         """
         Validates that both inputs are numbers and converts them to Decimal if needed.
 
@@ -20,12 +20,17 @@ class Add(Operation):
             a: The first input (expected to be Decimal-compatible).
             b: The second input (expected to be Decimal-compatible).
 
+        Returns:
+            tuple[Decimal, Decimal]: The validated and converted numbers.
+
         Raises:
-            TypeError: If a or b cannot be converted to Decimal.
+            ValueError: If a or b cannot be converted to Decimal.
         """
+        validated_numbers = []
         for var, var_name in [(a, "a"), (b, "b")]:
-            if not isinstance(var, Decimal):
-                try:
-                    Decimal(var)
-                except Exception as exc:
-                    raise TypeError(f"Invalid type for '{var_name}': {type(var).__name__}, expected Decimal-compatible.") from exc
+            try:
+                validated_numbers.append(Decimal(var))
+            except Exception:
+                raise ValueError(f"⚠️ Invalid input for '{var_name}': {var} (type: {type(var).__name__}) - Expected a number.")
+        
+        return tuple(validated_numbers)  # ✅ Return as a tuple for unpacking
