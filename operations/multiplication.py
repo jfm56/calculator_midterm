@@ -1,44 +1,39 @@
 """Multiplication Plugin Operation"""
 from decimal import Decimal, InvalidOperation
-from operations.operation_base import Operation
+from .operation_base import Operation
 
 class Multiply(Operation):
     """Performs multiplication of two numbers."""
 
     @staticmethod
     def execute(a, b) -> Decimal:
-        """
-        Returns the product of two numbers after validation.
-
-        Args:
-            a: The first input value.
-            b: The second input value.
-
-        Returns:
-            Decimal: The product of `a` and `b`.
-
-        Raises:
-            ValueError: If inputs cannot be converted to Decimal.
-        """
-        a, b = Multiply.validate_numbers(a, b)
+        """Returns the product of two numbers."""
+        a, b = Multiply.validate_numbers(a, b)  # ✅ Convert numbers if needed
         return a * b
 
     @classmethod
     def validate_numbers(cls, a, b) -> tuple[Decimal, Decimal]:
         """
-        Ensures input values are Decimal-compatible and returns them.
+        Validates that both inputs are numbers and converts them to Decimal if needed.
 
         Args:
-            a: The first input value.
-            b: The second input value.
+            a: The first input (expected to be Decimal-compatible).
+            b: The second input (expected to be Decimal-compatible).
 
         Returns:
             tuple[Decimal, Decimal]: The validated and converted numbers.
 
         Raises:
-            ValueError: If inputs cannot be converted to Decimal.
+            TypeError: If a or b cannot be converted to Decimal.
         """
-        try:
-            return Decimal(a), Decimal(b)  # ✅ Convert and return the values
-        except (InvalidOperation, ValueError):
-            raise ValueError(f"⚠️ Invalid input(s): '{a}' ({type(a).__name__}), '{b}' ({type(b).__name__}) - Expected numbers.")
+        validated_numbers = []
+        for var, var_name in [(a, "a"), (b, "b")]:
+            try:
+                validated_numbers.append(Decimal(var))
+            except (InvalidOperation, TypeError):
+                raise TypeError(f"⚠️ Invalid input for '{var_name}': {var} (type: {type(var).__name__}) - Expected a number.")
+
+        return tuple(validated_numbers)
+
+# ✅ Register the operation
+Operation.register("multiply", Multiply)

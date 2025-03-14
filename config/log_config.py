@@ -1,24 +1,32 @@
+"""Logging configuration for the calculator application."""
+
 import logging
 import sys
 
-# ✅ Create logger instance
+# ✅ Define a single logger for the entire application
 logger = logging.getLogger("calculator_logger")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)  # Log DEBUG and above messages
 
 # ✅ Define log format
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
-# 🔹 Console Handler (Only WARNING and ERROR messages show in the terminal)
+# 🔹 Console Handler (prints logs to terminal)
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setFormatter(formatter)
-console_handler.setLevel(logging.WARNING)  # ✅ Show warnings/errors only
+console_handler.setLevel(logging.ERROR)  # ✅ Only show errors in the console
 
-# 🔹 File Handler (Logs everything)
-file_handler = logging.FileHandler("app.log")
+# 🔹 File Handler (saves logs to `app.log`)
+file_handler = logging.FileHandler("app.log", mode="a")  # ✅ Append to logs
 file_handler.setFormatter(formatter)
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.DEBUG)  # ✅ Log everything to file
 
-# ✅ Attach handlers to the logger (avoid duplicates)
-if not logger.hasHandlers():
-    logger.addHandler(console_handler)  # ✅ Console: Only warnings/errors
-    logger.addHandler(file_handler)  # ✅ File: Logs everything
+# ✅ Remove previous handlers to prevent duplicates
+if logger.hasHandlers():
+    logger.handlers.clear()
+
+# ✅ Attach handlers
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+
+# ✅ Log system initialization
+logger.info("✅ Logging system initialized successfully!")

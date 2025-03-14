@@ -1,6 +1,6 @@
 """Addition Plugin Operation"""
-from decimal import Decimal
-from operations.operation_base import Operation
+from decimal import Decimal, InvalidOperation
+from .operation_base import Operation
 
 class Add(Operation):
     """Performs addition of two numbers."""
@@ -24,13 +24,16 @@ class Add(Operation):
             tuple[Decimal, Decimal]: The validated and converted numbers.
 
         Raises:
-            ValueError: If a or b cannot be converted to Decimal.
+            TypeError: If a or b cannot be converted to Decimal.
         """
         validated_numbers = []
         for var, var_name in [(a, "a"), (b, "b")]:
             try:
                 validated_numbers.append(Decimal(var))
-            except Exception:
-                raise ValueError(f"⚠️ Invalid input for '{var_name}': {var} (type: {type(var).__name__}) - Expected a number.")
-        
-        return tuple(validated_numbers)  # ✅ Return as a tuple for unpacking
+            except (InvalidOperation, TypeError):
+                raise TypeError(f"⚠️ Invalid input for '{var_name}': {var} (type: {type(var).__name__}) - Expected a number.")
+
+        return tuple(validated_numbers)
+
+# ✅ Register the operation
+Operation.register("add", Add)

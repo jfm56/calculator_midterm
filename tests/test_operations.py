@@ -95,5 +95,5 @@ def test_validate_numbers_invalid_type():
     """Ensure `validate_numbers()` raises TypeError for invalid inputs."""
     operation_instance = Add()  # ✅ Create an instance before calling `validate_numbers`
 
-    with pytest.raises(TypeError, match="Invalid type"):
-        operation_instance.validate_numbers("abc", "xyz")  # ✅ Call on an instance instead of the class
+    with pytest.raises(TypeError, match="Expected a number"):
+        operation_instance.validate_numbers("abc", "xyz")
