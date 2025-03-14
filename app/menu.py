@@ -1,89 +1,117 @@
-import sys
-import os
-import pandas as pd
+"""
+Calculator Menu Module - Handles user interactions via menu
+"""
+import logging
 from history.history import History
-from config.env import HISTORY_FILE_PATH
-from config.log_config import logger
+
+# ✅ Setup logger
+logger = logging.getLogger("calculator_logger")
 
 class Menu:
-    """Calculator Menu - Uses LBYL (Look Before You Leap)"""
+    """Handles interactive menu actions for the calculator."""
 
     @classmethod
     def show_menu(cls):
-        """Displays the calculator menu options."""
-        menu_options = (
-            "\n📜 Calculator Menu:\n"
-            "1️⃣ - View Calculation History\n"
-            "2️⃣ - Clear Calculation History\n"
-            "3️⃣ - Remove Entry by ID\n"
-            "4️⃣ - Reload History from CSV\n"
-            "5️⃣ - Exit Calculator"
-        )
-        logger.info(menu_options)
-
-    @classmethod
-    def _history_exists(cls):
-        """Helper function to check if history file exists and has content."""
-        return os.path.exists(HISTORY_FILE_PATH) and os.path.getsize(HISTORY_FILE_PATH) > 0
+        """Displays calculator menu."""
+        menu_text = """
+📜 Calculator Menu:
+==============================
+1️⃣ - View Calculation History
+2️⃣ - Clear Calculation History
+3️⃣ - Remove Entry by ID
+4️⃣ - Reload History from CSV
+5️⃣ - Exit Calculator
+==============================
+"""
+        print(menu_text)  # ✅ Display only in console
+        logger.info("📜 Menu displayed.")  # ✅ Log as a simple message
 
     @classmethod
     def handle_choice(cls, choice):
-        """Handles user menu selections using LBYL."""
+        """Handles user selection from the menu."""
         actions = {
             "1": cls.view_history,
             "2": cls.clear_history,
             "3": cls.remove_entry,
             "4": cls.reload_history,
-            "5": lambda: sys.exit(logger.info("\n👋 Exiting calculator. Goodbye!")),
+            "5": cls.exit_program
         }
-        actions.get(choice, lambda: logger.warning("\n❌ Invalid selection. Please try again."))()
+        action = actions.get(choice, cls.invalid_choice)
+        action()
 
     @classmethod
     def view_history(cls):
-        """Handles viewing calculation history."""
-        if cls._history_exists():
-            history_df = History.get_history()
-            logger.info("\n📜 Calculation History:\n%s", history_df if not history_df.empty else "⚠️ No calculations found.")
+        """Displays the calculation history without duplicate logging."""
+        history_df = History.get_history()
+
+        if history_df.empty:
+            message = "\n⚠️ No calculations found."
+            print(message)  # ✅ Show only in console
+            logger.warning("⚠️ No calculations found.")  # ✅ Log without duplication
         else:
-            logger.warning("\n⚠️ No history file found or it is empty.")
+            print("\n📜 Calculation History:")
+            print(history_df.to_string(index=False))  # ✅ Print clean output
+            logger.info("📜 Calculation history viewed.")  # ✅ Silent log
 
     @classmethod
     def clear_history(cls):
         """Clears the calculation history."""
-        if cls._history_exists():
+        confirmation = input("\n🛑 Are you sure you want to clear history? (yes/no): ").strip().lower()
+        if confirmation == "yes":
             History.clear_history()
-            logger.info("\n✅ History cleared successfully!")
+            print("\n✅ History cleared successfully!")
+            logger.info("✅ History cleared successfully.")  # ✅ Silent log
         else:
-            logger.warning("\n⚠️ No history file to clear.")
+            print("\n🚫 History clear operation cancelled.")
+            logger.info("🚫 History clear operation cancelled.")  # ✅ Silent log
 
     @classmethod
     def remove_entry(cls):
-        """Removes an entry by ID."""
-        if not cls._history_exists():
-            logger.warning("\n⚠️ No history file exists.")
-            return
-
+        """Removes an entry from history by ID."""
         history_df = History.get_history()
+
         if history_df.empty:
-            logger.warning("\n⚠️ No history available to remove.")
+            print("\n⚠️ No history available to remove.")
+            logger.warning("⚠️ No history available to remove.")
             return
 
-        logger.info("\n📜 Current History:\n%s", history_df)
+        print("\n📜 Current History:")
+        print(history_df.to_string(index=False))
+
         try:
-            entry_id = int(input("\n🔢 Enter the ID of the entry to remove: "))
-            if entry_id in history_df["ID"].astype(int).values:
-                History.remove_entry(entry_id)
-                logger.info(f"\n✅ Entry ID {entry_id} removed successfully!")
-            else:
-                logger.warning(f"\n⚠️ Entry ID {entry_id} not found.")
+            entry_id = int(input("\n🔢 Enter the ID of the entry to remove: ").strip())
+
+            if entry_id not in history_df["ID"].values:
+                print(f"\n⚠️ Entry with ID {entry_id} not found.")
+                logger.warning(f"⚠️ Entry with ID {entry_id} not found.")
+                return
+
+            History.remove_entry(entry_id)
+            print(f"\n✅ Entry {entry_id} removed successfully.")
+            logger.info(f"✅ Entry {entry_id} removed successfully.")
+
         except ValueError:
-            logger.error("\n❌ Invalid input. Please enter a valid numeric ID.")
+            print("\n❌ Invalid input. Please enter a numeric ID.")
+            logger.warning("❌ Invalid input. Non-numeric entry ID entered.")
 
     @classmethod
     def reload_history(cls):
         """Reloads history from CSV."""
-        if cls._history_exists():
-            History.load_history()
-            logger.info("\n🔄 History reloaded from CSV!")
-        else:
-            logger.warning("\n⚠️ No valid history file to reload.")
+        History.get_history()  # ✅ Correct method to load history
+        print("\n🔄 History reloaded successfully.")
+        logger.info("🔄 History reloaded successfully.")
+
+    @classmethod
+    def exit_program(cls):
+        """Exits the calculator program."""
+        print("\n👋 Exiting calculator. Goodbye!")
+        logger.info("👋 Exiting calculator. Goodbye!")
+        exit()
+
+    @staticmethod
+    def invalid_choice():
+        """Handles invalid menu selections."""
+        print("\n❌ Invalid selection. Please try again.")
+        logger.warning("❌ Invalid selection made in menu.")
+
+__all__ = ["Menu"]

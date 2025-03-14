@@ -1,47 +1,50 @@
+"""
+Abstract Base Class for Calculator Operations.
+"""
+
 from abc import ABC, abstractmethod
-from decimal import Decimal
-from typing import Type
-from config.plugins import load_plugins
+from decimal import Decimal, InvalidOperation
 
 class Operation(ABC):
-    """Abstract base class for calculator operations."""
-    
-    registry = {}
+    """
+    Abstract base class for all operations.
+    Each operation must implement the `execute` method.
+    """
 
-    def __init_subclass__(cls, **kwargs):
-        """Automatically registers subclasses in the operation registry."""
-        super().__init_subclass__(**kwargs)
-        operation_name = cls.__name__.lower()
-        cls.register_operation(operation_name, cls)
-
-    @classmethod
     @abstractmethod
-    def execute(cls, a: Decimal, b: Decimal) -> Decimal:
-        """Abstract method that must be implemented by subclasses."""
+    def execute(self, a: Decimal, b: Decimal) -> Decimal:
+        """
+        Execute the operation and return the result.
+
+        Args:
+            a (Decimal): The first operand.
+            b (Decimal): The second operand.
+
+        Returns:
+            Decimal: The result of the operation.
+        """
+        pass
 
     @classmethod
-    def validate_numbers(cls, a, b):
-        """Ensures input values are Decimal-compatible."""
-        try:
-            return Decimal(a), Decimal(b)
-        except Exception as exc:
-            raise TypeError(f"Invalid type: {type(a).__name__} or {type(b).__name__}") from exc
+    def validate_numbers(cls, a, b) -> tuple[Decimal, Decimal]:
+        """
+        Validates that both inputs are numbers and converts them to Decimal.
 
-    @classmethod
-    def get_operation(cls, name: str) -> Type["Operation"]:
-        """Retrieve a registered operation class by name."""
-        try:
-            return cls.registry[name.lower()]
-        except KeyError as exc:
-            raise KeyError(f"Operation '{name}' not found in registry.") from exc
+        Args:
+            a: The first input (expected to be numeric).
+            b: The second input (expected to be numeric).
 
-    @classmethod
-    def register_operation(cls, name: str, operation_class: Type["Operation"]):
-        """Registers an operation, preventing duplicates."""
-        name = name.lower()
-        if name in cls.registry:
-            raise ValueError(f"Operation '{name}' is already registered.")
-        cls.registry[name] = operation_class
+        Returns:
+            tuple[Decimal, Decimal]: The validated and converted numbers.
 
-# ✅ Load plugins AFTER defining `Operation` to prevent circular imports
-load_plugins()
+        Raises:
+            ValueError: If a or b cannot be converted to Decimal.
+        """
+        validated_numbers = []
+        for var, var_name in [(a, "a"), (b, "b")]:
+            try:
+                validated_numbers.append(Decimal(var))
+            except (InvalidOperation, TypeError, ValueError):
+                raise ValueError(f"⚠️ Invalid input for '{var_name}': {var} (type: {type(var).__name__}) - Expected a number.")
+
+        return tuple(validated_numbers)

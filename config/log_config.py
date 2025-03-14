@@ -5,20 +5,20 @@ import sys
 logger = logging.getLogger("calculator_logger")
 logger.setLevel(logging.DEBUG)
 
-# ✅ Format log messages
+# ✅ Define log format
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
-# 🔹 Console Handler (prints logs to terminal)
+# 🔹 Console Handler (Only WARNING and ERROR messages show in the terminal)
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setFormatter(formatter)
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(logging.WARNING)  # ✅ Show warnings/errors only
 
-# 🔹 File Handler (saves logs to `app.log`)
+# 🔹 File Handler (Logs everything)
 file_handler = logging.FileHandler("app.log")
 file_handler.setFormatter(formatter)
 file_handler.setLevel(logging.DEBUG)
 
 # ✅ Attach handlers to the logger (avoid duplicates)
 if not logger.hasHandlers():
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)  # ✅ Console: Only warnings/errors
+    logger.addHandler(file_handler)  # ✅ File: Logs everything

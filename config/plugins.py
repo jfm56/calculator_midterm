@@ -1,31 +1,19 @@
 import importlib
 import pkgutil
-from config.log_config import logger
-from config.env import PLUGIN_DIRECTORY
+import logging
+from mappings.operations_map import operation_mapping
 
-# ✅ Store loaded plugins to prevent duplicate imports
-_loaded_plugins = set()
+logger = logging.getLogger(__name__)
 
 def load_plugins():
-    """Dynamically loads all operation plugins from the specified directory."""
+    """Dynamically loads available operations."""
     try:
-        package = importlib.import_module(PLUGIN_DIRECTORY)
-        if not hasattr(package, "__path__"):
-            logger.error("⚠️ Plugin directory '%s' does not have a valid __path__.", PLUGIN_DIRECTORY)
-            return
+        for op_name, op_class in operation_mapping.items():
+            if op_name not in operation_mapping:
+                logger.debug(f"🔄 Attempting to load plugin: {op_name}")
+                operation_mapping[op_name] = op_class
+                logger.info(f"✅ Successfully loaded plugin: {op_name}")
+    except ImportError as e:
+        logger.error(f"❌ Failed to load plugins: {e}")
 
-    except ImportError:
-        logger.error("⚠️ Plugin directory '%s' not found.", PLUGIN_DIRECTORY)
-        return
-
-    for _, module_name, _ in pkgutil.iter_modules(package.__path__, package.__name__ + "."):
-        if module_name in _loaded_plugins:
-            logger.debug("Skipping already loaded plugin: %s", module_name)
-            continue
-
-        try:
-            importlib.import_module(module_name)
-            _loaded_plugins.add(module_name)
-            logger.info("✅ Successfully loaded plugin: %s", module_name)
-        except ImportError as e:
-            logger.error("❌ Failed to import %s: %s", module_name, e)
+load_plugins()

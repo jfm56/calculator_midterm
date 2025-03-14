@@ -1,75 +1,56 @@
-import sys
-from decimal import Decimal, InvalidOperation
-from config import plugins
-from config.log_config import logger
+"""
+Main Calculator Program - Interactive Menu & REPL
+"""
+import logging
+from app.menu import Menu
+from mappings.operations_map import operation_mapping
 from history.history import History
-from operations.operation_base import Operation
-from app.menu import Menu  
+from config.log_config import logger
 
-plugins.load_plugins()
+def main():
+    """Runs the interactive calculator program."""
+    print("\n✨ Welcome to the Interactive Calculator! ✨")
+    print("🔹 Type 'menu' to see available options.")
+    print("🔹 Type 'exit' to quit the calculator.")
+    print("🔹 To calculate: Enter operation followed by two numbers (e.g., 'add 2 3').\n")
 
-class CalculatorREPL:
-    """Command-line Read-Eval-Print Loop (REPL) for the calculator."""
+    logger.info("📢 Calculator started!")
 
-    @classmethod
-    def get_available_operations(cls):
-        """Returns a list of available operations."""
-        return list(Operation.registry.keys())
+    while True:
+        command = input("👉 Enter command: ").strip().lower()
 
-    @classmethod
-    def run_operation(cls, operation_name, a: Decimal, b: Decimal):
-        """Executes a calculator operation dynamically from the plugin system."""
-        try:
-            operation_class = Operation.registry.get(operation_name.lower())
-            if not operation_class:
-                return f"❌ Operation '{operation_name}' not found."
-            
-            result = operation_class.execute(a, b)
-            History.add_entry(operation_name, a, b, result)
-            return result
+        if command == "menu":
+            Menu.show_menu()
+        elif command == "exit":
+            print("👋 Exiting calculator. Goodbye!")
+            logger.info("👋 Exiting calculator.")
+            break
+        elif command in {"1", "2", "3", "4"}:  # Menu options
+            Menu.handle_choice(command)
+        else:
+            process_calculation(command)  # Try to process as a calculation
 
-        except ZeroDivisionError:
-            return "❌ Error: Division by zero is not allowed."
+def process_calculation(command):
+    """Processes arithmetic commands (e.g., 'add 2 3')."""
+    try:
+        parts = command.split()
+        if len(parts) != 3:
+            raise ValueError("⚠️ Invalid format. Expected: operation num1 num2")
 
-        except Exception as e:
-            return f"❌ Unexpected error: {e}"
+        operation, num1, num2 = parts[0], float(parts[1]), float(parts[2])
 
-    @classmethod
-    def repl(cls):
-        """Starts the interactive REPL session."""
-        print("\n== Welcome to REPL Calculator ==")
-        print("Type 'menu' for options, or enter calculations (e.g., add 2 3).")
+        if operation in operation_mapping:
+            result = operation_mapping[operation]().execute(num1, num2)
+            print(f"✅ Result: {result}")  # ✅ User message
+            logger.info(f"🧮 Calculation performed: {operation} {num1} {num2} = {result}")  # ✅ Silent log
+            History.add_entry(operation, num1, num2, result)  # Save calculation
+        else:
+            print(f"❌ Unknown operation: '{operation}'. Type 'menu' for options.")  # ✅ User message
+            logger.warning(f"❌ Invalid operation attempted: {operation}")  # ✅ Silent log
 
-        commands = {
-            "menu": Menu.show_menu,
-            "history": lambda: logger.info(History.get_history()),
-            "clear": lambda: (History.clear_history(), logger.info("History cleared.")),
-            "remove": lambda: Menu.handle_choice("3"),
-            "reload": lambda: Menu.handle_choice("4"),
-            "exit": lambda: sys.exit("Exiting calculator. Goodbye!"),
-        }
-
-        while True:
-            user_input = input(">> ").strip().lower()
-
-            if user_input in commands:
-                commands[user_input]()
-                continue
-
-            parts = user_input.split()
-            if len(parts) != 3:
-                logger.error("Invalid format! Use: <operation> <number1> <number2>")
-                continue
-
-            operation, a, b = parts
-            try:
-                a, b = Decimal(a), Decimal(b)
-            except InvalidOperation:
-                logger.error("Invalid number format! Ensure you're using numeric values.")
-                continue
-
-            result = cls.run_operation(operation, a, b)
-            logger.info(f"🧮 Result: {result}")
+    except ValueError as e:
+        print(f"❌ Error: {e}")  # ✅ User message
+        logger.error(f"❌ Input error: {e}")  # ✅ Silent log
 
 if __name__ == "__main__":
-    CalculatorREPL.repl()
+    main()
