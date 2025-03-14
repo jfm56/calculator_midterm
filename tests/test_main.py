@@ -30,7 +30,7 @@ def test_run_operation_valid():
     try:
         result = CalculatorREPL.run_operation("add", Decimal("2"), Decimal("3"))
         assert result == Decimal("5"), "⚠️ Expected 5"
-    except Exception as e:
+    except (KeyError, ZeroDivisionError, ValueError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 

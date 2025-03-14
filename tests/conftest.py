@@ -1,7 +1,6 @@
 """Test configuration and shared fixtures for the calculator tests."""
 import pytest
 from history.history import History
-from mappings.operations_map import operation_mapping
 
 @pytest.fixture(scope="function")
 def setup_and_teardown():
