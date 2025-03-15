@@ -12,14 +12,14 @@ def setup_and_teardown():
     """Ensure a clean history before and after each test."""
     try:
         History.clear_history()
-    except Exception as e:
+    except (FileNotFoundError) as e:
         pytest.fail(f"❌ Setup failed: {e}")
 
     yield  # ✅ Run the test
 
     try:
         History.clear_history()
-    except Exception as e:
+    except (FileNotFoundError) as e:
         pytest.fail(f"❌ Teardown failed: {e}")
 
 
@@ -29,7 +29,7 @@ def test_show_menu(capfd):
         Menu.show_menu()
         captured = capfd.readouterr()
         assert "📜 Calculator Menu:" in captured.out, "⚠️ Menu text missing."
-    except Exception as e:
+    except (FileNotFoundError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
@@ -47,7 +47,7 @@ def test_clear_history(mock_input, capfd, caplog):
         assert "✅ History cleared successfully." in caplog.text, "⚠️ Expected log message missing."
 
         assert History.get_history().empty, "⚠️ History should be empty after clearing."
-    except Exception as e:
+    except (AssertionError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
@@ -65,7 +65,7 @@ def test_clear_history_cancel(mock_input, capfd, caplog):
         assert "🚫 History clear operation cancelled." in caplog.text, "⚠️ Expected log message missing."
 
         assert not History.get_history().empty, "⚠️ History should remain unchanged."
-    except Exception as e:
+    except (AssertionError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
@@ -82,7 +82,7 @@ def test_remove_nonexistent_entry(mock_input, capfd, caplog):
         captured = capfd.readouterr()
         assert "⚠️ Entry with ID 999 not found." in captured.out, f"⚠️ Unexpected output: {captured.out}"
         assert "⚠️ Entry with ID 999 not found." in caplog.text, "⚠️ Expected log warning missing."
-    except Exception as e:
+    except (AssertionError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
@@ -93,7 +93,7 @@ def test_handle_choice_valid(mock_view_history, mock_input):
     try:
         Menu.handle_choice("1")
         mock_view_history.assert_called_once()
-    except Exception as e:
+    except (FileNotFoundError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
@@ -104,7 +104,7 @@ def test_handle_invalid_choice(mock_logger, mock_input):
     try:
         Menu.handle_choice("99")
         mock_logger.assert_called_once_with("❌ Invalid selection made in menu.")
-    except Exception as e:
+    except (FileNotFoundError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
@@ -121,5 +121,5 @@ def test_exit_program(mock_exit, mock_input, capfd, caplog):
         assert "👋 Exiting calculator. Goodbye!" in caplog.text, "⚠️ Expected log message missing."
 
         mock_exit.assert_called_once()
-    except Exception as e:
+    except (AssertionError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")

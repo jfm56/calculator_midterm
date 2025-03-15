@@ -2,7 +2,6 @@
 
 import os
 import pytest
-import pandas as pd
 from history.history import History
 
 # ✅ Define a test CSV file separate from the main history file
@@ -20,11 +19,10 @@ def setup_and_teardown():
         if os.path.exists(TEST_HISTORY_FILE):
             os.remove(TEST_HISTORY_FILE)
 
-        # ✅ Clear in-memory history
-        History._history = pd.DataFrame(columns=["ID", "Operation", "Operand1", "Operand2", "Result"])
-        History.clear_history()  # ✅ Ensure CSV and memory are both cleared
+        # ✅ Ensure history is properly cleared
+        History.clear_history()
 
-    except Exception as e:
+    except (FileNotFoundError, ValueError) as e:
         pytest.fail(f"❌ Setup failed: {e}")
 
     yield  # ✅ Run the test
@@ -34,9 +32,9 @@ def setup_and_teardown():
         if os.path.exists(TEST_HISTORY_FILE):
             os.remove(TEST_HISTORY_FILE)
 
-        # ✅ Reset in-memory history after tests
-        History._history = pd.DataFrame(columns=["ID", "Operation", "Operand1", "Operand2", "Result"])
-    except Exception as e:
+        # ✅ Reset history
+        History.clear_history()
+    except (FileNotFoundError, ValueError) as e:
         pytest.fail(f"❌ Teardown failed: {e}")
 
 
@@ -47,7 +45,7 @@ def test_add_entry():
         history = History.get_history()
         assert not history.empty, "⚠️ History should not be empty after adding an entry."
         assert history.iloc[-1]["Operation"] == "add", "⚠️ Last entry should be an addition operation."
-    except Exception as e:
+    except (KeyError, ValueError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
@@ -59,7 +57,7 @@ def test_get_history_empty():
         history = History.get_history()
 
         assert history.empty, f"⚠️ Expected an empty history, but got:\n{history}"
-    except Exception as e:
+    except (FileNotFoundError, ValueError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
@@ -69,25 +67,26 @@ def test_remove_entry():
         History.clear_history()  # ✅ Ensure fresh state
 
         History.add_entry("subtract", 10, 3, 7)
-        entry_id = History.get_history().iloc[-1]["ID"]  # ✅ Get last entry's ID
+        initial_size = len(History.get_history())
 
+        entry_id = History.get_history().iloc[-1]["ID"]  # ✅ Get last entry's ID
         History.remove_entry(entry_id)
 
-        history = History.get_history()
-        assert entry_id not in history["ID"].values, f"⚠️ Entry {entry_id} should be removed."
+        history_after = History.get_history()
+        assert len(history_after) == initial_size - 1, f"⚠️ Expected history size to decrease after removing entry {entry_id}."
     except KeyError:
         pytest.fail("❌ KeyError: Entry ID should exist before removal.")
-    except Exception as e:
+    except (FileNotFoundError, ValueError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
 def test_remove_nonexistent_entry():
     """Test trying to remove a non-existent entry using EAFP."""
     try:
-        History.remove_entry(999)  # ✅ Non-existent ID
+        History.remove_entry(999)  # ✅ Non-existent ID should not raise an error
     except KeyError:
         pytest.fail("❌ Unexpected KeyError: Should handle missing entries gracefully.")
-    except Exception as e:
+    except (FileNotFoundError, ValueError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
@@ -99,7 +98,7 @@ def test_clear_history():
 
         history = History.get_history()
         assert history.empty, f"⚠️ History should be empty after clearing, but got:\n{history}"
-    except Exception as e:
+    except (FileNotFoundError, ValueError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
 
 
@@ -111,5 +110,5 @@ def test_reload_history():
 
         history = History.get_history()
         assert not history.empty, "⚠️ Expected history to be present after reloading."
-    except Exception as e:
+    except (FileNotFoundError, ValueError) as e:
         pytest.fail(f"❌ Unexpected error: {e}")
