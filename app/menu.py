@@ -2,6 +2,7 @@
 Calculator Menu Module - Handles user interactions via menu
 """
 import logging
+import sys
 from history.history import History
 
 # ✅ Setup logger
@@ -106,7 +107,7 @@ class Menu:
         """Exits the calculator program."""
         print("\n👋 Exiting calculator. Goodbye!")
         logger.info("👋 Exiting calculator. Goodbye!")
-        exit()
+        sys.exit(0)
 
     @staticmethod
     def invalid_choice():

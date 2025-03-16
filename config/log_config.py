@@ -15,18 +15,19 @@ console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setFormatter(formatter)
 console_handler.setLevel(logging.ERROR)  # ✅ Only show errors in the console
 
-# 🔹 File Handler (saves logs to `app.log`)
-file_handler = logging.FileHandler("app.log", mode="a")  # ✅ Append to logs
+# 🔹 File Handler (saves logs to `app.log`, overwriting old logs on each run)
+file_handler = logging.FileHandler("app.log", mode="w")  # ✅ Overwrite logs for each run
 file_handler.setFormatter(formatter)
 file_handler.setLevel(logging.DEBUG)  # ✅ Log everything to file
 
-# ✅ Remove previous handlers to prevent duplicates
-if logger.hasHandlers():
-    logger.handlers.clear()
+# ✅ Ensure all previous handlers are cleared before adding new ones
+for handler in logger.handlers[:]:
+    logger.removeHandler(handler)
 
 # ✅ Attach handlers
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 
-# ✅ Log system initialization
+# ✅ Log system initialization at both INFO and ERROR levels
 logger.info("✅ Logging system initialized successfully!")
+logger.error("🔴 Logging system initialized (console-visible)")

@@ -1,119 +1,105 @@
 """
-Main Calculator Program - Interactive Menu & REPL
+Main entry point for the interactive command-line calculator.
 """
-from app.menu import Menu
-from mappings.operations_map import operation_mapping  # ✅ Corrected import
+
+import sys
+import logging
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+
 from history.history import History
-from config.log_config import logger
-from operations.operation_base import Operation
+from mappings.operations_map import operation_mapping
+from app.menu import Menu
+from operations import operation_base
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
+logger = logging.getLogger("calculator_logger")
+
 
 class CalculatorREPL:
-    """Handles the interactive Read-Eval-Print Loop (REPL) for the calculator."""
-
-    @classmethod
-    def repl(cls):
-        """Starts the REPL loop."""
-        print("\n✨ Welcome to the Interactive Calculator! ✨")
-        while True:
-            command = input("Enter command: ").strip().lower()
-
-            if command == "exit":
-                print("👋 Exiting calculator. Goodbye!")
-                logger.info("👋 Exiting calculator.")
-                break
-            elif command == "menu":
-                Menu.show_menu()
-            else:
-                cls.process_calculation(command)
-
-    @classmethod
-    def run_operation(cls, operation_name, a, b):
-        """Runs a registered operation."""
-        try:
-            logger.info(f"📝 Running operation: {operation_name} with inputs {a}, {b}")
-            operation = Operation.get_operation(operation_name)
-
-            # ✅ Ensure valid input conversion
-            a, b = operation.validate_numbers(a, b)
-
-            # ✅ Handle division by zero explicitly
-            if operation_name == "divide" and b == 0:
-                raise ZeroDivisionError("❌ Division by zero is not allowed.")
-
-            result = operation.execute(a, b)
-            logger.info(f"✅ Operation successful: {operation_name}({a}, {b}) = {result}")
-            return result
-
-        except KeyError:
-            logger.error(f"❌ Operation '{operation_name}' not found.")
-            raise KeyError(f"⚠️ Operation '{operation_name}' not found.")
-        except ZeroDivisionError as e:
-            logger.error(f"❌ {e}")
-            raise  # ✅ Now correctly raises the error
-        except Exception as e:
-            logger.error(f"❌ Error during operation '{operation_name}': {e}")
-            raise
+    """Interactive Read-Eval-Print Loop (REPL) for the calculator."""
 
     @staticmethod
     def start():
-        """Starts the interactive calculator REPL."""
+        """Starts the interactive calculator loop."""
         print("\n✨ Welcome to the Interactive Calculator! ✨")
-        print("🔹 Type 'menu' to see available options.")
-        print("🔹 Type 'exit' to quit the calculator.")
-        print("🔹 To calculate: Enter operation followed by two numbers (e.g., 'add 2 3').\n")
+        CalculatorREPL.display_instructions()
 
-        logger.info("📢 Calculator started!")
+        try:
+            while True:
+                command = input("\n📝 Enter command: ").strip().lower()
+                if command == "exit":
+                    print("👋 Exiting calculator.")
+                    logger.info("👋 Exiting calculator.")
+                    sys.exit(0)
+                elif command == "menu":
+                    Menu.show_menu()
+                elif command == "history":
+                    Menu.show_history()
+                elif command == "clear":
+                    Menu.clear_history()
+                elif command == "help":
+                    CalculatorREPL.display_instructions()
+                else:
+                    CalculatorREPL.process_calculation(command)
 
-        while True:
-            command = input("👉 Enter command: ").strip().lower()
-            logger.info(f"📝 User entered command: {command}")
-
-            if command == "menu":
-                Menu.show_menu()
-            elif command == "exit":
-                print("👋 Exiting calculator. Goodbye!")
-                logger.info("👋 Exiting calculator.")
-                break
-            elif command in {"1", "2", "3", "4"}:
-                Menu.handle_choice(command)
-            else:
-                CalculatorREPL.process_calculation(command)
+        except KeyboardInterrupt:
+            print("\n👋 Exiting calculator.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"❌ Unexpected error: {e}")
+            logger.error(f"Unexpected error: {e}")
 
     @staticmethod
-    def process_calculation(command: str):
-        """Processes a calculation command entered in the REPL and logs it to history."""
+    def display_instructions():
+        """Displays usage instructions for the REPL."""
+        print("📌 Instructions:")
+        print("🔹 Type 'menu' to see available operations.")
+        print("🔹 Type 'exit' to quit the calculator.")
+        print("🔹 To perform calculations, enter: `<operation> <num1> <num2>` (e.g., `add 2 3`).")
+        print("🔹 To use statistical operations, enter: `<operation> <num1> <num2> <num3> ...` (e.g., `mean 10 20 30`).")
+        print("🔹 Type 'history' to view past calculations.")
+        print("🔹 Type 'clear' to erase calculation history.")
+        print("🔹 Type 'help' to display this message again.")
+
+    @staticmethod
+    def process_calculation(command):
+        """Processes user commands for calculations."""
+        parts = command.split()
+
+        if not parts:
+            print("⚠️ Invalid format. Expected: <operation> <num1> <num2> ...")
+            return
+
+        operation_name = parts[0]
+
+        # 🔹 Fix: Check for unknown operations before processing numbers
+        if operation_name not in operation_mapping:
+            print(f"❌ Unknown operation: '{operation_name}'. Type 'menu' for options.")
+            return
+
         try:
-            parts = command.split()
-            if len(parts) != 3:
-                print("❌ Error: ⚠️ Invalid format. Expected: operation num1 num2")
-                return
+            numbers = [Decimal(num) for num in parts[1:]]
+        except InvalidOperation:
+            print("⚠️ Invalid number format. Ensure all values are numeric.")
+            return
 
-            operation_name, num1, num2 = parts[0], parts[1], parts[2]
+        try:
+            # ✅ Corrected key lookup
+            result = operation_mapping[operation_name].execute(*numbers)
+            formatted_result = result.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-            if operation_name not in operation_mapping:
-                print(f"❌ Unknown operation: '{operation_name}'. Type 'menu' for options.")
-                return
+            # ✅ Corrected argument for history
+            print(f"✅ Result: {formatted_result}")
+            History.add_entry(operation_name, list(numbers), formatted_result)
 
-            operation = operation_mapping[operation_name]
-            num1, num2 = operation.validate_numbers(num1, num2)
-            result = operation.execute(num1, num2)
-
-            # ✅ Log to history after successful calculation
-            History.add_entry(operation_name, num1, num2, result)
-
-            print(f"✅ Result: {result}")
-
-        except ZeroDivisionError as e:
-            print(f"{e}")  # Handle division by zero properly
-        except TypeError as e:
-            print(f"⚠️ Invalid input: {e}")
+        except ZeroDivisionError:
+            print("❌ Division by zero is not allowed.")
+            logger.error("Attempted division by zero.")
         except Exception as e:
-            print(f"🚨 Unexpected error: {e}")
+            print(f"❌ Error: {e}")
+            logger.error(f"Error during calculation ({command}): {e}")
 
-    @classmethod
-    def get_available_operations(cls):
-        """Returns a list of available operations."""
-        return list(operation_mapping.keys())  # ✅ Updated reference
 
 if __name__ == "__main__":
     CalculatorREPL.start()

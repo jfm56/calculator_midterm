@@ -1,0 +1,75 @@
+"""
+Unit tests for statistical operations.
+"""
+
+import pytest
+import statistics
+from decimal import Decimal
+from operations.statistics import Mean, Median, StandardDeviation, Variance
+
+
+# ✅ Test valid cases
+@pytest.mark.parametrize("cls, numbers, expected", [
+    # Mean ✅
+    (Mean, [1, 2, 3, 4, 5], Decimal("3.0")),
+    (Mean, [10, 20, 30], Decimal("20.0")),
+    (Mean, [100], Decimal("100.0")),
+    (Mean, [-5, -10, -15], Decimal("-10.0")),
+    (Mean, [1.1, 2.2, 3.3], Decimal("2.2")),
+    (Mean, ["1", "2", "3"], Decimal("2.0")),
+    (Mean, [Decimal("10"), "20", 30], Decimal("20.0")),
+
+    # Median ✅
+    (Median, [1, 2, 3, 4, 5], Decimal("3.0")),
+    (Median, [10, 20, 30, 40], Decimal("25.0")),
+    (Median, [100], Decimal("100.0")),
+    (Median, [7, 3, 9, 1], Decimal("5.0")),
+
+    # Standard Deviation ✅
+    (StandardDeviation, [1, 2, 3, 4, 5], Decimal(statistics.stdev([1, 2, 3, 4, 5]))),
+    (StandardDeviation, [10, 10, 10], Decimal("0.0")),
+    (StandardDeviation, [100, 100], Decimal("0.0")),  # Edge case: Two identical numbers
+
+    # Variance ✅
+    (Variance, [1, 2, 3, 4, 5], Decimal(statistics.variance([1, 2, 3, 4, 5]))),
+    (Variance, [10, 10, 10], Decimal("0.0")),
+    (Variance, [100, 100], Decimal("0.0")),  # Edge case: Two identical numbers
+])
+def test_stat_operations(cls, numbers, expected):
+    """Test statistical operations with valid input."""
+    assert cls.execute(*numbers) == pytest.approx(expected, rel=1e-4)
+
+
+# ✅ Additional tests for edge cases (Empty input, incorrect types)
+@pytest.mark.parametrize("cls", [Mean, Median, StandardDeviation, Variance])
+def test_stat_operations_empty_list(cls):
+    """Ensure statistical operations raise an error when given an empty list."""
+    with pytest.raises(statistics.StatisticsError):
+        cls.execute()
+
+
+@pytest.mark.parametrize("cls", [Mean, Median, StandardDeviation, Variance])
+@pytest.mark.parametrize("invalid_input", [
+    ["abc", 10, 20],  # Non-numeric string
+    [None, 10, 20],  # None values
+    [True, 10, 20],  # Boolean values
+    ["1.1", "2.2", "invalid"],  # Mixed valid/invalid types
+])
+def test_stat_operations_invalid(cls, invalid_input):
+    """Ensure statistical operations raise errors for invalid input."""
+    with pytest.raises((TypeError, statistics.StatisticsError)):
+        cls.execute(*invalid_input)
+
+# ✅ Ensure single-element input is correctly handled (Variance and StdDev should fail)
+@pytest.mark.parametrize("cls", [StandardDeviation, Variance])
+def test_stat_operations_single_element(cls):
+    """Ensure variance and standard deviation fail for a single number input."""
+    with pytest.raises(statistics.StatisticsError):
+        cls.execute(10)
+
+        @patch("builtins.print")
+        def test_std_dev_single_value(mock_print):
+            """Ensure std_dev returns 0 for a single value input."""
+            CalculatorREPL.process_calculation("std_dev 10")  # Single value case
+        
+            mock_print.assert_any_call("✅ Result: 0")

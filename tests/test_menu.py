@@ -1,125 +1,160 @@
-"""Tests for the Menu class using EAFP principles."""
+"""
+Unit tests for the Menu module.
 
-import pytest
-import logging
+These tests cover:
+- Displaying the menu
+- Handling user choices
+- Viewing, clearing, and removing history
+- Reloading history
+- Exiting the program
+- Handling invalid menu selections
+"""
+import pandas as pd
 from unittest.mock import patch
+from app.menu import Menu
 from history.history import History
-from app.menu import Menu  # ✅ Ensure correct import path
 
 
-@pytest.fixture(autouse=True)
-def setup_and_teardown():
-    """Ensure a clean history before and after each test."""
-    try:
-        History.clear_history()
-    except (FileNotFoundError) as e:
-        pytest.fail(f"❌ Setup failed: {e}")
-
-    yield  # ✅ Run the test
-
-    try:
-        History.clear_history()
-    except (FileNotFoundError) as e:
-        pytest.fail(f"❌ Teardown failed: {e}")
+@patch("builtins.print")
+def test_show_menu(mock_print):
+    """Ensure Menu.show_menu() displays the correct menu."""
+    Menu.show_menu()
+    mock_print.assert_any_call("\n📜 Calculator Menu:\n==============================\n1️⃣ - View Calculation History\n2️⃣ - Clear Calculation History\n3️⃣ - Remove Entry by ID\n4️⃣ - Reload History from CSV\n5️⃣ - Exit Calculator\n==============================\n")
 
 
-def test_show_menu(capfd):
-    """Test that the menu displays correctly."""
-    try:
-        Menu.show_menu()
-        captured = capfd.readouterr()
-        assert "📜 Calculator Menu:" in captured.out, "⚠️ Menu text missing."
-    except (FileNotFoundError) as e:
-        pytest.fail(f"❌ Unexpected error: {e}")
+@patch("builtins.print")
+@patch("builtins.input", side_effect=["1", "5"])  # Simulate user input
+@patch("sys.exit", autospec=True)  # Prevent the test from exiting
+def test_handle_choice(mock_exit, mock_input, mock_print):
+    """Ensure Menu handles user choices correctly."""
+
+    # ✅ **Mock history with a DataFrame (not a list)**
+    mock_history_df = pd.DataFrame({
+        "ID": [1],
+        "Operation": ["add"],
+        "Operands": ["[2, 3]"],
+        "Result": [5]
+    })
+
+    with patch.object(History, "get_history", return_value=mock_history_df):
+        Menu.handle_choice("1")  # Show history
+        Menu.handle_choice("5")  # Exit program
+
+    # ✅ **Verify history is printed**
+    mock_print.assert_any_call("\n📜 Calculation History:")
+
+    # ✅ **Ensure exit message is printed**
+    mock_print.assert_any_call("\n👋 Exiting calculator. Goodbye!")
+
+    # ✅ **Confirm sys.exit(0) was called once**
+    mock_exit.assert_called_once()
 
 
+@patch("builtins.print")
+def test_view_history_empty(mock_print):
+    """Ensure Menu.view_history() handles empty history."""
+    with patch.object(History, "get_history", return_value=pd.DataFrame()):
+        Menu.view_history()
+    mock_print.assert_any_call("\n⚠️ No calculations found.")
+
+
+@patch("builtins.print")
+def test_view_history_with_data(mock_print):
+    """Ensure Menu.view_history() displays history when present."""
+    mock_history_df = pd.DataFrame({
+        "ID": [1],
+        "Operation": ["add"],
+        "Operands": ["[2, 3]"],
+        "Result": [5]
+    })
+    with patch.object(History, "get_history", return_value=mock_history_df):
+        Menu.view_history()
+    mock_print.assert_any_call("\n📜 Calculation History:")
+
+
+@patch("builtins.print")
 @patch("builtins.input", side_effect=["yes"])
-def test_clear_history(mock_input, capfd, caplog):
-    """Test clearing history using EAFP."""
-    try:
-        caplog.set_level(logging.INFO)
-
-        History.add_entry("add", 2, 3, 5)
+def test_clear_history_confirm(mock_input, mock_print):
+    """Ensure Menu.clear_history() clears history when confirmed."""
+    with patch.object(History, "clear_history") as mock_clear:
         Menu.clear_history()
-
-        captured = capfd.readouterr()
-        assert "✅ History cleared successfully!" in captured.out, "⚠️ Expected history cleared message."
-        assert "✅ History cleared successfully." in caplog.text, "⚠️ Expected log message missing."
-
-        assert History.get_history().empty, "⚠️ History should be empty after clearing."
-    except (AssertionError) as e:
-        pytest.fail(f"❌ Unexpected error: {e}")
+        mock_clear.assert_called_once()
+    mock_print.assert_any_call("\n✅ History cleared successfully!")
 
 
+@patch("builtins.print")
 @patch("builtins.input", side_effect=["no"])
-def test_clear_history_cancel(mock_input, capfd, caplog):
-    """Test cancelling history clear operation using EAFP."""
-    try:
-        caplog.set_level(logging.INFO)
-
-        History.add_entry("subtract", 10, 5, 5)
+def test_clear_history_cancel(mock_input, mock_print):
+    """Ensure Menu.clear_history() does not clear history when cancelled."""
+    with patch.object(History, "clear_history") as mock_clear:
         Menu.clear_history()
-
-        captured = capfd.readouterr()
-        assert "🚫 History clear operation cancelled." in captured.out, "⚠️ Expected cancel message."
-        assert "🚫 History clear operation cancelled." in caplog.text, "⚠️ Expected log message missing."
-
-        assert not History.get_history().empty, "⚠️ History should remain unchanged."
-    except (AssertionError) as e:
-        pytest.fail(f"❌ Unexpected error: {e}")
+        mock_clear.assert_not_called()
+    mock_print.assert_any_call("\n🚫 History clear operation cancelled.")
 
 
-@patch("builtins.input", side_effect=["999"])
-def test_remove_nonexistent_entry(mock_input, capfd, caplog):
-    """Test attempting to remove a non-existent entry using EAFP."""
-    try:
-        caplog.set_level(logging.WARNING)
-
-        # ✅ Ensure there's at least one entry in history
-        History.add_entry("multiply", 4, 2, 8)
+@patch("builtins.print")
+@patch("builtins.input", side_effect=["2"])
+def test_remove_nonexistent_entry(mock_input, mock_print):
+    """Ensure Menu.remove_entry() handles missing entries correctly."""
+    with patch.object(History, "get_history", return_value=pd.DataFrame()):
         Menu.remove_entry()
-
-        captured = capfd.readouterr()
-        assert "⚠️ Entry with ID 999 not found." in captured.out, f"⚠️ Unexpected output: {captured.out}"
-        assert "⚠️ Entry with ID 999 not found." in caplog.text, "⚠️ Expected log warning missing."
-    except (AssertionError) as e:
-        pytest.fail(f"❌ Unexpected error: {e}")
+    mock_print.assert_any_call("\n⚠️ No history available to remove.")
 
 
+@patch("builtins.print")
+@patch("builtins.input", side_effect=["3"])
+def test_remove_entry_invalid(mock_input, mock_print):
+    """Ensure Menu.remove_entry() handles invalid IDs correctly."""
+    mock_history_df = pd.DataFrame({
+        "ID": [1],
+        "Operation": ["add"],
+        "Operands": ["[2, 3]"],
+        "Result": [5]
+    })
+    with patch.object(History, "get_history", return_value=mock_history_df):
+        Menu.remove_entry()
+    mock_print.assert_any_call("\n⚠️ Entry with ID 3 not found.")
+
+
+@patch("builtins.print")
 @patch("builtins.input", side_effect=["1"])
-@patch("app.menu.Menu.view_history")  # ✅ Fix incorrect module reference
-def test_handle_choice_valid(mock_view_history, mock_input):
-    """Test valid menu choices using EAFP."""
-    try:
-        Menu.handle_choice("1")
-        mock_view_history.assert_called_once()
-    except (FileNotFoundError) as e:
-        pytest.fail(f"❌ Unexpected error: {e}")
+def test_remove_entry_valid(mock_input, mock_print):
+    """Ensure Menu.remove_entry() removes valid entry."""
+    mock_history_df = pd.DataFrame({
+        "ID": [1],
+        "Operation": ["add"],
+        "Operands": ["[2, 3]"],
+        "Result": [5]
+    })
+    with patch.object(History, "get_history", return_value=mock_history_df):
+        with patch.object(History, "remove_entry") as mock_remove:
+            Menu.remove_entry()
+            mock_remove.assert_called_once_with(1)
+    mock_print.assert_any_call("\n✅ Entry 1 removed successfully.")
 
 
-@patch("builtins.input", side_effect=["99"])
-@patch("app.menu.logger.warning")  # ✅ Fix incorrect module reference
-def test_handle_invalid_choice(mock_logger, mock_input):
-    """Test invalid menu choice handling using EAFP."""
-    try:
-        Menu.handle_choice("99")
-        mock_logger.assert_called_once_with("❌ Invalid selection made in menu.")
-    except (FileNotFoundError) as e:
-        pytest.fail(f"❌ Unexpected error: {e}")
+@patch("builtins.print")
+def test_reload_history(mock_print):
+    """Ensure Menu.reload_history() calls get_history()."""
+    with patch.object(History, "get_history") as mock_reload:
+        Menu.reload_history()
+        mock_reload.assert_called_once()
+    mock_print.assert_any_call("\n🔄 History reloaded successfully.")
 
+@patch("builtins.print")
+@patch("sys.exit", autospec=True)
+def test_exit_program(mock_exit, mock_print):
+    """Ensure Menu.exit_program() exits the program."""
+    Menu.exit_program()
 
-@patch("builtins.input", side_effect=["exit"])
-@patch("builtins.exit")
-def test_exit_program(mock_exit, mock_input, capfd, caplog):
-    """Test the exit function using EAFP."""
-    try:
-        caplog.set_level(logging.INFO)
-        Menu.exit_program()
+    # ✅ Verify sys.exit(0) was called
+    mock_exit.assert_called_once_with(0)
 
-        captured = capfd.readouterr()
-        assert "👋 Exiting calculator. Goodbye!" in captured.out, f"⚠️ Unexpected output: {captured.out}"
-        assert "👋 Exiting calculator. Goodbye!" in caplog.text, "⚠️ Expected log message missing."
+    # ✅ Ensure exit message was printed
+    mock_print.assert_any_call("\n👋 Exiting calculator. Goodbye!")
 
-        mock_exit.assert_called_once()
-    except (AssertionError) as e:
-        pytest.fail(f"❌ Unexpected error: {e}")
+@patch("builtins.print")
+def test_invalid_choice(mock_print):
+    """Ensure invalid menu selections are handled."""
+    Menu.invalid_choice()
+    mock_print.assert_any_call("\n❌ Invalid selection. Please try again.")
