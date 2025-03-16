@@ -46,10 +46,12 @@ def test_process_calculation_divide_by_zero(mock_print):
 
 
 @patch("builtins.print")
-def test_process_calculation_invalid(mock_print):
-    """Ensure invalid commands are handled properly."""
-    CalculatorREPL.process_calculation("invalid_command")
-    mock_print.assert_any_call("❌ Unknown operation: 'invalid_command'. Type 'menu' for options.")
+def test_process_calculation_invalid_format(mock_print):
+    """Ensure invalid input formats are handled properly."""
+    CalculatorREPL.process_calculation("add two three")
+
+    # ✅ Ensure correct message is logged
+    mock_print.assert_any_call("⚠️ Invalid number format. Ensure all values are numeric.")
 
 
 @patch("builtins.print")
@@ -140,14 +142,6 @@ def test_process_calculation_unknown_operation(mock_print):
     """Ensure unknown operations are properly handled."""
     CalculatorREPL.process_calculation("unknown_op 5 10")
     mock_print.assert_any_call("❌ Unknown operation: 'unknown_op'. Type 'menu' for options.")
-
-
-@patch("builtins.print")
-def test_process_calculation_invalid_format(mock_print):
-    """Ensure invalid input formats are handled properly."""
-    CalculatorREPL.process_calculation("add two three")
-    mock_print.assert_any_call("⚠️ Invalid number format. Ensure all values are numeric.")
-
 
 @patch("builtins.print")
 def test_repl_welcome(mock_print):

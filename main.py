@@ -9,10 +9,15 @@ from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 from history.history import History
 from mappings.operations_map import operation_mapping
 from app.menu import Menu
-from operations import operation_base
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
+# ✅ Logging setup: Write logs to a file instead of the console
+logging.basicConfig(
+    filename="calculator.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
 logger = logging.getLogger("calculator_logger")
 
 
@@ -28,16 +33,16 @@ class CalculatorREPL:
         try:
             while True:
                 command = input("\n📝 Enter command: ").strip().lower()
+
                 if command == "exit":
                     print("👋 Exiting calculator.")
                     logger.info("👋 Exiting calculator.")
                     sys.exit(0)
                 elif command == "menu":
                     Menu.show_menu()
-                elif command == "history":
-                    Menu.show_history()
-                elif command == "clear":
-                    Menu.clear_history()
+                elif command in {"1", "2", "3", "4", "5"}:
+                    # ✅ Route menu selections to Menu.handle_choice
+                    Menu.handle_choice(command)
                 elif command == "help":
                     CalculatorREPL.display_instructions()
                 else:
@@ -73,25 +78,27 @@ class CalculatorREPL:
 
         operation_name = parts[0]
 
-        # 🔹 Fix: Check for unknown operations before processing numbers
+        # 🔹 Check for unknown operations before processing numbers
         if operation_name not in operation_mapping:
             print(f"❌ Unknown operation: '{operation_name}'. Type 'menu' for options.")
             return
 
         try:
             numbers = [Decimal(num) for num in parts[1:]]
-        except InvalidOperation:
+            if len(numbers) < 2:  # Ensure at least two numbers for valid operations
+                raise ValueError("⚠️ Expected at least two numbers for this operation.")
+        except (InvalidOperation, ValueError):
             print("⚠️ Invalid number format. Ensure all values are numeric.")
             return
 
         try:
-            # ✅ Corrected key lookup
-            result = operation_mapping[operation_name].execute(*numbers)
+            result = operation_mapping[operation_name](*numbers)
             formatted_result = result.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-            # ✅ Corrected argument for history
             print(f"✅ Result: {formatted_result}")
-            History.add_entry(operation_name, list(numbers), formatted_result)
+
+            # ✅ Ensure individual numbers and a string result are passed
+            History.add_entry(operation_name, [str(num) for num in numbers], str(formatted_result))
 
         except ZeroDivisionError:
             print("❌ Division by zero is not allowed.")

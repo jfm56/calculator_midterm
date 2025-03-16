@@ -8,14 +8,14 @@ from operations.multiplication import Multiply
 from operations.division import Divide
 from operations.statistics import Mean, Median, StandardDeviation, Variance
 
-# ✅ Dictionary mapping operation names to their corresponding classes
+# ✅ Dictionary mapping operation names to their corresponding functions
 operation_mapping = {
-    "add": Add,
-    "subtract": Subtract,
-    "multiply": Multiply,
-    "divide": Divide,
-    "mean": Mean,
-    "median": Median,
-    "std_dev": StandardDeviation,
-    "variance": Variance,
+    "add": Add().execute,
+    "subtract": Subtract().execute,
+    "multiply": Multiply().execute,
+    "divide": Divide().execute,
+    "mean": Mean().execute,
+    "median": Median().execute,
+    "std_dev": StandardDeviation().execute,
+    "variance": Variance().execute,
 }
