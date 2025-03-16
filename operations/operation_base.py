@@ -16,11 +16,17 @@ class Operation(ABC):
     @abstractmethod
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
         """Performs the operation."""
-        pass
 
     @classmethod
     def validate_numbers(cls, a, b) -> tuple[Decimal, Decimal]:
         """Convert inputs to Decimals or raise TypeError for invalid inputs."""
+    
+        # 🚨 Explicitly reject booleans
+        if isinstance(a, bool) or isinstance(b, bool):
+            error_msg = f"⚠️ Invalid input: {repr(a)} ({type(a).__name__}) or {repr(b)} ({type(b).__name__}) - Boolean values are not allowed."
+            logger.error(error_msg)
+            raise TypeError(error_msg)
+
         try:
             validated_a = Decimal(str(a))
             validated_b = Decimal(str(b))

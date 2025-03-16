@@ -1,9 +1,8 @@
 """
 Main Calculator Program - Interactive Menu & REPL
 """
-import logging
 from app.menu import Menu
-from mappings.operations_map import operation_mapping
+from mappings.operations_map import operation_mapping  # ✅ Corrected import
 from history.history import History
 from config.log_config import logger
 from operations.operation_base import Operation
@@ -81,44 +80,40 @@ class CalculatorREPL:
                 CalculatorREPL.process_calculation(command)
 
     @staticmethod
-    def process_calculation(command):
-        """Processes arithmetic commands (e.g., 'add 2 3')."""
+    def process_calculation(command: str):
+        """Processes a calculation command entered in the REPL and logs it to history."""
         try:
             parts = command.split()
             if len(parts) != 3:
-                raise ValueError("⚠️ Invalid format. Expected: operation num1 num2")
+                print("❌ Error: ⚠️ Invalid format. Expected: operation num1 num2")
+                return
 
             operation_name, num1, num2 = parts[0], parts[1], parts[2]
 
-            if operation_name in operation_mapping:
-                operation = operation_mapping[operation_name]()
-
-                # ✅ Validate input
-                try:
-                    num1, num2 = operation.validate_numbers(num1, num2)
-                except TypeError as e:
-                    print(f"❌ Error: {e}")
-                    logger.error(f"❌ Input error: {e}")
-                    return
-
-                # ✅ Execute operation
-                result = operation.execute(num1, num2)
-                print(f"✅ Result: {result}")
-                logger.info(f"🧮 Calculation performed: {operation_name} {num1} {num2} = {result}")
-                History.add_entry(operation_name, num1, num2, result)
-
-            else:
+            if operation_name not in operation_mapping:
                 print(f"❌ Unknown operation: '{operation_name}'. Type 'menu' for options.")
-                logger.warning(f"❌ Invalid operation attempted: {operation_name}")
+                return
 
-        except ValueError as e:
-            print(f"❌ Error: {e}")
-            logger.error(f"❌ Input error: {e}")
+            operation = operation_mapping[operation_name]
+            num1, num2 = operation.validate_numbers(num1, num2)
+            result = operation.execute(num1, num2)
 
-    @staticmethod
-    def get_available_operations():
+            # ✅ Log to history after successful calculation
+            History.add_entry(operation_name, num1, num2, result)
+
+            print(f"✅ Result: {result}")
+
+        except ZeroDivisionError as e:
+            print(f"{e}")  # Handle division by zero properly
+        except TypeError as e:
+            print(f"⚠️ Invalid input: {e}")
+        except Exception as e:
+            print(f"🚨 Unexpected error: {e}")
+
+    @classmethod
+    def get_available_operations(cls):
         """Returns a list of available operations."""
-        return list(operation_mapping.keys())
+        return list(operation_mapping.keys())  # ✅ Updated reference
 
 if __name__ == "__main__":
     CalculatorREPL.start()

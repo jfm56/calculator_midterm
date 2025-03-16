@@ -16,24 +16,22 @@ class Subtract(Operation):
         """
         Validates that both inputs are numbers and converts them to Decimal if needed.
 
-        Args:
-            a: The first input (expected to be Decimal-compatible).
-            b: The second input (expected to be Decimal-compatible).
-
-        Returns:
-            tuple[Decimal, Decimal]: The validated and converted numbers.
-
         Raises:
-            TypeError: If a or b cannot be converted to Decimal.
+            TypeError: If a or b is a boolean, list, dict, or cannot be converted to Decimal.
         """
+        # 🚨 Explicitly reject booleans, lists, and dictionaries
+        if isinstance(a, (bool, list, dict)) or isinstance(b, (bool, list, dict)):
+            raise TypeError(f"⚠️ Invalid input: {repr(a)} ({type(a).__name__}) or {repr(b)} ({type(b).__name__}) - Invalid type.")
+
         validated_numbers = []
         for var, var_name in [(a, "a"), (b, "b")]:
             try:
                 validated_numbers.append(Decimal(var))
-            except (InvalidOperation, TypeError):
-                raise TypeError(f"⚠️ Invalid input for '{var_name}': {var} (type: {type(var).__name__}) - Expected a number.")
+            except Exception:
+                raise TypeError(f"⚠️ Invalid input for '{var_name}': {repr(var)} ({type(var).__name__}) - Expected a number.")
 
         return tuple(validated_numbers)
+
 
 # ✅ Register the operation
 Operation.register("subtract", Subtract)
