@@ -29,7 +29,7 @@ Ensure **Python 3.13+** is installed. Then, clone the repository and install dep
 
 ```bash
 git clone https://github.com/jfm56/Calculator_midterm.git
-cd Calculator2
+cd Calculator_midterm
 python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 pip install -r requirements.txt
