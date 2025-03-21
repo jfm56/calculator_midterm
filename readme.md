@@ -28,7 +28,7 @@ Built with **Python 3.13+**, the calculator leverages plugins for operations, **
 Ensure **Python 3.13+** is installed. Then, clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/jfm56/Calculator2.git
+git clone https://github.com/jfm56/Calculator_midterm.git
 cd Calculator2
 python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
@@ -68,24 +68,17 @@ The calculator supports an interactive **REPL (Read-Eval-Print Loop)**, allowing
 Type 'menu' for options, or enter calculations (e.g., add 2 3).
 >> menu
 
-=== Calculator Menu ===
-1. View Available Operations
-2. Show Calculation History
-3. Remove Entry by ID
-4. Clear Calculation History
-5. Exit Menu
-
-Select an option (1-5): 1
-
-Available Operations:
-  - add
-  - subtract
-  - multiply
-  - divide
-  - mean
-  - median
-  - std_dev
-  - variance
+📜 Calculator Menu:
+==============================
+🔹 Available Operations:
+add, divide, mean, median, multiply, subtract
+==============================
+1️⃣ - View Calculation History
+2️⃣ - Clear Calculation History
+3️⃣ - Remove Entry by ID
+4️⃣ - Reload History from CSV
+5️⃣ - Exit Calculator
+==============================
 ```
 
 ### **💡 Example Calculation in REPL Mode:**
