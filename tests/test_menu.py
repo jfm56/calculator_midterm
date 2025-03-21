@@ -13,14 +13,28 @@ import pandas as pd
 from unittest.mock import patch
 from app.menu import Menu
 from history.history import History
+from mappings.operations_map import operation_mapping
 
 
 @patch("builtins.print")
 def test_show_menu(mock_print):
-    """Ensure Menu.show_menu() displays the correct menu."""
+    """Ensure Menu.show_menu() displays the correct menu options including operations."""
     Menu.show_menu()
-    mock_print.assert_any_call("\n📜 Calculator Menu:\n==============================\n1️⃣ - View Calculation History\n2️⃣ - Clear Calculation History\n3️⃣ - Remove Entry by ID\n4️⃣ - Reload History from CSV\n5️⃣ - Exit Calculator\n==============================\n")
 
+    # Capture all calls made to `print`
+    print_calls = [call_arg[0][0] for call_arg in mock_print.call_args_list]
+
+    # Ensure the standard menu options are present
+    assert any("1️⃣ - View Calculation History" in call for call in print_calls)
+    assert any("2️⃣ - Clear Calculation History" in call for call in print_calls)
+    assert any("3️⃣ - Remove Entry by ID" in call for call in print_calls)
+    assert any("4️⃣ - Reload History from CSV" in call for call in print_calls)
+    assert any("5️⃣ - Exit Calculator" in call for call in print_calls)
+
+    # Ensure available operations are listed
+    expected_operations = sorted(operation_mapping.keys())  # Ensure sorted order
+    for operation in expected_operations:
+        assert any(operation in call for call in print_calls), f"Operation '{operation}' missing from menu."
 
 @patch("builtins.print")
 @patch("builtins.input", side_effect=["1", "5"])  # Simulate user input

@@ -9,6 +9,7 @@ import pytest
 from app.menu import Menu
 from history.history import History
 from main import CalculatorREPL
+from mappings.operations_map import operation_mapping
 
 
 @pytest.mark.parametrize("command, expected_output", [
@@ -97,17 +98,24 @@ def test_repl_instructions(mock_exit, mock_input, mock_print):
 
 @patch("builtins.print")
 def test_show_menu(mock_print):
-    """Ensure Menu.show_menu() displays the correct menu options."""
+    """Ensure Menu.show_menu() displays the correct menu options including operations."""
     Menu.show_menu()
-    mock_print.assert_any_call(
-        "\n📜 Calculator Menu:\n==============================\n"
-        "1️⃣ - View Calculation History\n"
-        "2️⃣ - Clear Calculation History\n"
-        "3️⃣ - Remove Entry by ID\n"
-        "4️⃣ - Reload History from CSV\n"
-        "5️⃣ - Exit Calculator\n"
-        "==============================\n"
-    )
+
+    # Capture all calls made to `print`
+    print_calls = [call_arg[0][0] for call_arg in mock_print.call_args_list]
+
+    # Ensure the standard menu options are present
+    assert any("1️⃣ - View Calculation History" in call for call in print_calls)
+    assert any("2️⃣ - Clear Calculation History" in call for call in print_calls)
+    assert any("3️⃣ - Remove Entry by ID" in call for call in print_calls)
+    assert any("4️⃣ - Reload History from CSV" in call for call in print_calls)
+    assert any("5️⃣ - Exit Calculator" in call for call in print_calls)
+
+    # Ensure available operations are listed
+    expected_operations = sorted(operation_mapping.keys())  # Ensure sorted order
+    for operation in expected_operations:
+        assert any(operation in call for call in print_calls), f"Operation '{operation}' missing from menu."
+
 
 
 @patch("builtins.print")

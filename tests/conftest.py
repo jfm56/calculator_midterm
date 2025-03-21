@@ -17,3 +17,12 @@ def monkeypatch_input(monkeypatch):
             return "1"
         return "exit"
     monkeypatch.setattr("builtins.input", mock_input)
+
+def pytest_addoption(parser):
+    """Registers a custom --num_records argument."""
+    parser.addoption("--num_records", action="store", default="10", help="Number of records for testing")
+
+@pytest.fixture
+def num_records(request):
+    """Retrieves the --num_records value for tests."""
+    return int(request.config.getoption("--num_records"))

@@ -4,6 +4,7 @@ Calculator Menu Module - Handles user interactions via menu
 import logging
 import sys
 from history.history import History
+from mappings.operations_map import operation_mapping
 
 # ✅ Setup logger
 logger = logging.getLogger("calculator_logger")
@@ -13,10 +14,18 @@ class Menu:
 
     @classmethod
     def show_menu(cls):
-        """Displays calculator menu."""
-        menu_text = """
+        """Displays calculator menu including all available operations."""
+        
+        operations_list = sorted(operation_mapping.keys())
+        operations_display = ', '.join(operations_list)
+
+        menu_text = f"""
 📜 Calculator Menu:
 ==============================
+🔹 Available Operations:
+{operations_display}
+
+🔸 Menu Options:
 1️⃣ - View Calculation History
 2️⃣ - Clear Calculation History
 3️⃣ - Remove Entry by ID
