@@ -1,73 +1,51 @@
-# **Command-Line Calculator with Plugin System**
+# Advanced Python Command-Line Calculator with Plugin System
+
+## 📌 Overview
+This modular command-line calculator is designed with a plugin-based architecture, enabling dynamic addition of arithmetic and statistical operations. It features an interactive REPL, history tracking with Pandas, and comprehensive test coverage using Pytest and Faker. Built with **Python 3.13+**, the project also supports environment configuration, professional logging, and CI/CD via GitHub Actions.
 
 ---
 
-## **📌 Overview**
-
-This modular command-line calculator is designed with a plugin-based architecture, enabling dynamic addition of new arithmetic and statistical operations. The system provides an interactive menu, history tracking using Pandas, and comprehensive testing with high test coverage.
-
-Built with **Python 3.13+**, the calculator leverages plugins for operations, **pytest** for testing, **Faker** for dynamic test generation, and **Pandas** for managing historical data. It also supports customizable test records via the `--num_record=<N>` CLI option.
-
-### **🌟 Features**
-
-✅ **Plugin-Based System** – Easily extendable with dynamically loaded arithmetic and statistical operations.  
-✅ **Interactive REPL Mode** – Menu-driven interface with real-time calculations.  
-✅ **History Tracking** – View, retrieve, and clear past calculations using **Pandas-based storage**.  
-✅ **Robust Testing Suite** – High test coverage with **pytest**, **Faker**, and **parameterized tests**.  
-✅ **Custom Test Data** – Generate test cases dynamically using `--num_record=<N>`.  
-✅ **Code Quality & CI/CD** – Linting with **Pylint**, testing with **pytest-cov**, and maintainable architecture.  
-✅ **Extensible Design** – Easily add new arithmetic or statistical operations without modifying the core logic.  
-✅ **Persistent History Storage** – **history.csv** stores calculation history across sessions.  
-✅ **Environment Configuration** – Supports `.env` files for managing configurations.  
-✅ **Demonstration Video** – A tutorial video will be available to showcase the calculator's functionality.  
+## 🌟 Features
+- ✅ **Plugin-Based Architecture** – Dynamically load new operations without modifying core logic.  
+- ✅ **Interactive REPL Mode** – Menu-driven interface for real-time calculations.  
+- ✅ **Calculation History** – View, retrieve, and clear history using Pandas and CSV.  
+- ✅ **Comprehensive Testing** – Pytest with Faker and parameterized tests.  
+- ✅ **Custom Test Generation** – Dynamic test data with `--num_record=<N>` option.  
+- ✅ **CI/CD with GitHub Actions** – Code passes all tests on push and PR.  
+- ✅ **Environment Variable Support** – Configurable logging and paths via `.env`.  
+- ✅ **Professional Logging** – Configured log levels and formats using environment variables.  
+- ✅ **Extensible Design** – Easily add new operations via the plugin system.
 
 ---
 
-## **⚙️ Installation**
-
-Ensure **Python 3.13+** is installed. Then, clone the repository and install dependencies:
-
+## ⚙️ Installation
 ```bash
 git clone https://github.com/jfm56/Calculator_midterm.git
 cd Calculator_midterm
 python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
 ---
 
-## **🚀 Usage**
+## 🚀 Usage
 
-### **Run the Interactive Menu**
-Start the calculator in interactive mode:
-
+### Start REPL Mode
 ```bash
 python main.py
 ```
 
-### **Perform Direct Command-Line Calculations**
-Run operations directly from the terminal:
+### Direct Command Execution
 ```bash
-python main.py add 10 5
-# Output: ✅ Result: 15.00
-```
-```bash
-python main.py divide 20 4
-# Output: ✅ Result: 5.00
+python main.py add 10 5       # ✅ Result: 15.00
+python main.py divide 20 4    # ✅ Result: 5.00
 ```
 
 ---
 
-## **📜 Interactive Menu**
-
-The calculator supports an interactive **REPL (Read-Eval-Print Loop)**, allowing users to perform calculations seamlessly.
-
-### **🔹 Interactive Menu Example:**
-```bash
-== Welcome to REPL Calculator ==
-Type 'menu' for options, or enter calculations (e.g., add 2 3).
->> menu
-
+## 📜 Interactive Menu (REPL)
+```text
 📜 Calculator Menu:
 ==============================
 🔹 Available Operations:
@@ -81,153 +59,105 @@ add, divide, mean, median, multiply, subtract
 ==============================
 ```
 
-### **💡 Example Calculation in REPL Mode:**
-```bash
->> add 5 3
-✅ Result: 8.00
-
->> divide 10 2
-✅ Result: 5.00
-
->> history
-📜 Calculation History:
-1. add 5 3 = 8.00
-2. divide 10 2 = 5.00
-
->> remove 1
-✅ Entry 1 removed successfully.
-
->> clear
-✅ History cleared.
-
->> exit
-👋 Exiting calculator...
-```
 ---
 
-## **🛠️ Configuration**
+## 🧐 Design Pattern Usage
 
-### **Persistent History Storage**
-The calculator saves all calculations to `history.csv`, allowing users to retain their calculation history across sessions.
+### Strategy & Factory Patterns
+- The plugin system registers and retrieves operations dynamically via the `Operation` base class and `operation_mapping`.  
+  [View Implementation → operation_base.py](./operations/operation_base.py)
 
-### **Environment Variables**
-Environment configuration settings can be managed via a `.env` file to set paths, logging configurations, or other runtime parameters.
+### Facade Pattern
+- The `History` class abstracts complex Pandas operations behind simple methods.  
+  [View Implementation → history.py](./history/history.py)
 
-### **🎲 Faker-based Test Data**
+### Command Pattern
+- REPL input is parsed and routed to command handlers through the `Menu` and `CalculatorREPL` logic.  
+  [View Implementation → menu.py](./app/menu.py)
 
-The test suite uses **Faker** to generate randomized test cases dynamically. To control the number of test cases generated:
+---
+
+## 🧪 Testing
+
+### Run Tests with Coverage
+```bash
+pytest --cov=main --cov=operations --cov=history --cov=tests --cov-report=term-missing
+```
+
+### Run with Custom Test Records
 ```bash
 pytest --num_record=10
 ```
 
----
-
-## **🧪 Testing**
-
-Run the test suite with full coverage:
+### Lint Check
 ```bash
-pytest --cov=main --cov=operations --cov=history --cov=tests --cov-report=term-missing
-```
-Check code quality:
-```bash
-pylint main.py operations history.py tests/
+pylint main.py operations history tests
 ```
 
 ---
 
-## **🔌 Extending the Calculator**
+## 🔐 Environment Variables
 
-### **Adding a New Operation**
-To add a new arithmetic or statistical operation, follow these steps:
+- Managed via `.env` file.
+- Supports custom logging levels and history paths.
 
-1️⃣ **Create a new file** in the `operations/` directory, e.g., `modulus.py`.
-2️⃣ **Define a class** that inherits from `OperationBase`:
-```python
-from operations.operation_base import OperationBase
-from decimal import Decimal
-
-class Modulus(OperationBase):
-    """Modulus operation for remainder calculation."""
-    @classmethod
-    def execute(cls, a, b):
-        return Decimal(a) % Decimal(b)
+```env
+LOG_LEVEL=INFO
+HISTORY_PATH=history.csv
 ```
-3️⃣ **Register the new operation** in `operation_mapping.py`:
-```python
-operation_mapping = {
-    "add": Add,
-    "subtract": Subtract,
-    "multiply": Multiply,
-    "divide": Divide,
-    "mean": Mean,
-    "median": Median,
-    "std_dev": StandardDeviation,
-    "variance": Variance,
-    "modulus": Modulus,  # ✅ New operation added
-}
+
+[View Usage → log_config.py](./config/log_config.py)
+
+---
+
+## 📝 Exception Handling (LBYL vs EAFP)
+- **EAFP**: Used in input validation with `Decimal()` conversion wrapped in `try/except`.  
+  [Example → addition.py](./operations/addition.py)
+
+- **LBYL**: Used in history operations like checking if the entry exists before removing.  
+  [Example → menu.py](./app/menu.py)
+
+---
+
+## 📹 Video Demo
+A short video walkthrough demonstrating REPL, plugin usage, history features, and error handling:  
+**[▶️ Watch the Demo Video](https://your-demo-video-link.com)**
+
+---
+
+## 🔌 Adding a New Operation
+1. Create a new file in `operations/`, e.g., `modulus.py`.
+2. Inherit from `Operation` and implement `execute()`.
+3. Register it in `operation_mapping.py`.
+4. Done! It will appear in the REPL automatically.
+
+---
+
+## 📂 Project Structure
 ```
-4️⃣ The **plugin system will automatically load the new operation** when the calculator runs.
-
----
-
-## **📂 Project Structure**
-
-```bash
-Calculator2/
-│── .github/               # CI/CD pipeline configuration
-│── app/                   # Application utilities
-│   ├── menu.py
-│── config/                # Configuration files
-│── history/               # Calculation history management
-│   ├── history.py
-│── mappings/              # Operation mappings
-│── operations/            # Arithmetic & statistical operation plugins
-│   ├── add.py
-│   ├── subtract.py
-│   ├── multiply.py
-│   ├── divide.py
-│   ├── statistics.py    # Mean, Median, Std_dev, Variance
-│   ├── operation_base.py
-│   ├── operation_mapping.py
-│── tests/                 # Unit & integration tests
-│   ├── conftest.py
-│   ├── test_main.py
-│   ├── test_operations.py
-│   ├── test_history.py
-│   ├── test_menu.py
-│   ├── test_operation_base.py
-│   ├── test_plugins.py
-│   ├── test_statistics.py
-│── .coveragerc            # Coverage configuration
-│── history.csv            # Calculation history file
-│── main.py                # Main CLI program
-│── .env                   # Environment configuration
-│── README.md              # Project documentation
-│── requirements.txt       # Dependencies
+Calculator_midterm/
+├── app/               # CLI menu and REPL
+├── config/            # Logging and plugin loaders
+├── history/           # Pandas-based history handler
+├── mappings/          # Operation mapping
+├── operations/        # Core + statistical operation plugins
+├── tests/             # Pytest test suite
+├── .env               # Configuration file
+├── .github/           # GitHub Actions workflows
+├── main.py            # CLI entry point
+├── README.md          # Project documentation
 ```
----
-
-## **📄 License**
-
-This project is licensed under the **MIT License**. You are free to modify and distribute the software with attribution.
 
 ---
 
-## **👨‍💻 Author**
+## 📄 License
+MIT License
 
-Developed by **Jim Mullen**. Contributions and improvements are welcome!
-
-📧 Contact: [GitHub](https://github.com/jfm56)
-
----
-
-## **🔗 References & Acknowledgments**
-- [Python 3.13 Documentation](https://docs.python.org/3/)
-- [Pytest](https://docs.pytest.org/)
-- [Faker](https://faker.readthedocs.io/)
-- [Pylint](https://pylint.pycqa.org/)
+## 👨‍💼 Author
+Jim Mullen  
+**GitHub:** [jfm56](https://github.com/jfm56)
 
 ---
 
-🚀 **Happy Calculating!** 🎯
+🚀 Happy Calculating! 🎯
 
