@@ -121,7 +121,8 @@ HISTORY_PATH=history.csv
 
 ## 📹 Video Demo
 A short video walkthrough demonstrating REPL, plugin usage, history features, and error handling:  
-**[▶️ Watch the Demo Video](https://your-demo-video-link.com)**
+[![Watch the video](https://img.youtube.com/vi/pvTk703yhU4/0.jpg)](https://youtu.be/pvTk703yhU4)
+
 
 ---
 
